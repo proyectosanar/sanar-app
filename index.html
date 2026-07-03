@@ -65,12 +65,14 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
       </button>
-      <div class="flex items-center gap-2 min-w-0">
-        <div class="w-9 h-9 rounded-full bg-brand-700 text-white grid place-items-center font-bold">S</div>
-        <div class="min-w-0">
-          <div class="text-sm font-semibold text-slate-900 leading-tight">SANAR</div>
-          <div id="headerSubtitle" class="text-xs text-slate-500 leading-tight truncate">Mis registros</div>
-        </div>
+      <div class="flex items-center gap-2 min-w-0 flex-1">
+        <img
+          src="logo.png"
+          alt="Proyecto Sanar"
+          class="h-9 w-auto object-contain shrink-0"
+          onerror="this.style.display='none'"
+        />
+        <div id="headerSubtitle" class="text-sm text-slate-500 leading-tight truncate">Mis registros</div>
       </div>
     </div>
   </header>
@@ -80,8 +82,16 @@
   <!-- Templates -->
   <template id="tplHome">
     <div class="fade-in">
-      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Hola 👋</h1>
-      <p class="text-slate-600 mb-6">¿Qué querés hacer hoy?</p>
+      <div class="flex justify-center mb-4">
+        <img
+          src="logo.png"
+          alt="Proyecto Sanar"
+          class="max-h-24 sm:max-h-32 w-auto object-contain"
+          onerror="this.style.display='none'"
+        />
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-1 text-center">Hola 👋</h1>
+      <p class="text-slate-600 mb-6 text-center">¿Qué querés hacer hoy?</p>
 
       <div class="grid gap-4">
         <a
@@ -120,7 +130,15 @@
         </a>
       </div>
 
-      <p class="text-xs text-slate-500 mt-8 text-center">SANAR · uso interno</p>
+      <div class="mt-10 flex flex-col items-center gap-2">
+        <img
+          src="logo-matricia.png"
+          alt="matricia"
+          class="h-10 w-auto opacity-80"
+          onerror="this.style.display='none'"
+        />
+        <p class="text-xs text-slate-500">SANAR · uso interno</p>
+      </div>
     </div>
   </template>
 
@@ -227,9 +245,9 @@
     // ---------------------------------------------------------------------
     const CONFIG = {
       // URL de tu Web App de Google Apps Script (termina en .../exec)
-      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwamOV22EYjMd4r0rzPDhhglbenkDSvfQY6ZcyQKwEfQ-Xs86O9yCD3AusrEGVXxjbW/exec',
+      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwA6--iQZnCzbWY-42C_290HZ9mQnPhZKW-Y7p-oghyKSU-DqG1HTwQ41z_bNwKML5I/exec',
       // URL del formulario Google para "Cargar producción"
-      GOOGLE_FORM_URL: 'https://forms.gle/sSMoA7b94WM58QJWA',
+      GOOGLE_FORM_URL: 'https://forms.gle/cT4j7qkmeyXSjayu7',
     };
     // ---------------------------------------------------------------------
 
