@@ -126,7 +126,7 @@
               pattern="[0-9]*"
               autocomplete="off"
               required
-              maxlength="6"
+              maxlength="8"
               placeholder="••••"
               class="pin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
@@ -489,7 +489,7 @@
         errEl.hidden = true;
 
         if (!persona) { errEl.textContent = 'Elegí tu nombre.'; errEl.hidden = false; return; }
-        if (!/^\d{4}$|^\d{6}$/.test(pin)) { errEl.textContent = 'El PIN debe tener 4 o 6 dígitos.'; errEl.hidden = false; return; }
+        if (!/^\d{4,8}$/.test(pin)) { errEl.textContent = 'El PIN debe tener entre 4 y 8 números.'; errEl.hidden = false; return; }
 
         btn.disabled = true;
         btn.textContent = 'Entrando…';
