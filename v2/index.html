@@ -245,8 +245,8 @@
           <div class="flex items-start gap-4">
             <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center text-2xl shrink-0">📋</div>
             <div class="min-w-0">
-              <h2 class="text-lg font-semibold text-slate-900">Consultar mis registros</h2>
-              <p class="text-sm text-slate-600 mt-1">Ver lo que cargaste este mes y revisar si falta algo.</p>
+              <h2 id="consultaTitulo" class="text-lg font-semibold text-slate-900">Consultar mis registros</h2>
+              <p id="consultaDesc" class="text-sm text-slate-600 mt-1">Ver lo que cargaste este mes y revisar si falta algo.</p>
             </div>
             <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
           </div>
@@ -277,6 +277,14 @@
   <!-- CONSULTA (sin dropdown de persona: el scope viene de la sesión) -->
   <template id="tplConsulta">
     <div class="fade-in space-y-4">
+      <section id="selPersonaWrap" class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5" hidden>
+        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="fPersona">Colaboradora</label>
+        <select id="fPersona" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+          <option value="">Cargando…</option>
+        </select>
+        <p class="text-xs text-slate-500 mt-2">Ves lo mismo que ve ella en su pantalla.</p>
+      </section>
+
       <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -372,6 +380,7 @@
       filtros: {
         mes: localStorage.getItem('sanar.mes') || mesActualISO(),
         buscar: '',
+        persona: localStorage.getItem('sanar.verPersona') || '',
       },
     };
 
@@ -575,7 +584,11 @@
       main.innerHTML = '';
       const node = document.getElementById('tplHome').content.cloneNode(true);
 
-      if (esGestion()) node.getElementById('linkResetear').hidden = false;
+      if (esGestion()) {
+        node.getElementById('linkResetear').hidden = false;
+        node.getElementById('consultaTitulo').textContent = 'Consultar registros de las colaboradoras';
+        node.getElementById('consultaDesc').textContent = 'Elegí una colaboradora y mirá lo mismo que ve ella en su pantalla.';
+      }
 
       const linkCargar = node.getElementById('linkCargar');
       if (CONFIG.GOOGLE_FORM_URL && !CONFIG.GOOGLE_FORM_URL.startsWith('PONER_')) {
@@ -662,12 +675,14 @@
       if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
 
       showHeader(true);
-      setHeader({ back: true, subtitle: 'Mis registros' });
+      setHeader({ back: true, subtitle: esGestion() ? 'Registros de las colaboradoras' : 'Mis registros' });
 
       const main = document.getElementById('main');
       main.innerHTML = '';
       const node = document.getElementById('tplConsulta').content.cloneNode(true);
       main.appendChild(node);
+
+      if (esGestion()) prepararSelectorPersona();
 
       // Dropdown de meses
       const selMes = document.getElementById('fMes');
@@ -698,16 +713,49 @@
         }, 200);
       });
 
+      if (!esGestion()) cargarRegistros();
+    }
+
+    async function prepararSelectorPersona() {
+      const sel = document.getElementById('fPersona');
+      document.getElementById('selPersonaWrap').hidden = false;
+      mostrarEstado('Cargando la lista de colaboradoras…', true);
+      try {
+        const data = await api({ action: 'listar_colaboradoras' });
+        sel.innerHTML = '<option value="">Elegí una colaboradora…</option>';
+        for (const p of data.colaboradoras) {
+          const opt = document.createElement('option');
+          opt.value = p.persona;
+          opt.textContent = p.persona;
+          sel.appendChild(opt);
+        }
+        if (!data.colaboradoras.some(p => p.persona === state.filtros.persona)) state.filtros.persona = '';
+        sel.value = state.filtros.persona;
+      } catch (err) {
+        sel.innerHTML = '<option value="">(no se pudo cargar la lista)</option>';
+        mostrarEstado('No se pudo cargar la lista de colaboradoras: ' + err.message);
+        return;
+      }
+      sel.addEventListener('change', () => {
+        state.filtros.persona = sel.value;
+        localStorage.setItem('sanar.verPersona', sel.value);
+        cargarRegistros();
+      });
       cargarRegistros();
     }
 
     async function cargarRegistros() {
-      const { mes } = state.filtros;
+      const { mes, persona } = state.filtros;
       const desde = formatFechaISO(primerDiaDelMes(mes));
       const hasta = formatFechaISO(ultimoDiaDelMes(mes));
+      const params = { action: 'registros', desde, hasta };
+      if (esGestion()) {
+        if (!persona) { mostrarEstado('Elegí una colaboradora para ver sus registros.'); return; }
+        params.persona = persona;
+      }
       mostrarEstado('Cargando registros…', true);
       try {
-        const data = await api({ action: 'registros', desde, hasta });
+        const data = await api(params);
         state.registros = data.registros || [];
         render();
       } catch (err) {
