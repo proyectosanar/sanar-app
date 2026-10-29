@@ -17,9 +17,7 @@
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
           colors: {
             brand: {
               50:  '#f0fdfa',
@@ -33,8 +31,7 @@
           },
           boxShadow: {
             card: '0 4px 20px -2px rgba(15, 118, 110, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
-            'card-hover':
-              '0 10px 30px -6px rgba(15, 118, 110, 0.18), 0 4px 10px -2px rgba(0, 0, 0, 0.05)',
+            'card-hover': '0 10px 30px -6px rgba(15, 118, 110, 0.18), 0 4px 10px -2px rgba(0, 0, 0, 0.05)',
           },
         },
       },
@@ -49,12 +46,20 @@
     .fade-in { animation: fadeIn .18s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
     [hidden] { display: none !important; }
+
+    /* Input numérico tipo PIN: digits grandes */
+    .pin-input {
+      font-size: 1.5rem;
+      letter-spacing: 0.4em;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
   </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800 min-h-screen antialiased">
   <!-- ================== HEADER ================== -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+  <header id="appHeader" class="bg-white border-b border-slate-200 sticky top-0 z-10" hidden>
     <div class="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
       <button
         id="btnBack"
@@ -73,109 +78,226 @@
           class="h-9 w-auto object-contain shrink-0"
           onerror="this.style.display='none'"
         />
-        <div id="headerSubtitle" class="text-sm text-slate-500 leading-tight truncate">Mis registros</div>
+        <div class="min-w-0">
+          <div id="headerPersona" class="text-sm font-semibold text-slate-900 truncate leading-tight"></div>
+          <div id="headerSubtitle" class="text-xs text-slate-500 leading-tight truncate">Mis registros</div>
+        </div>
       </div>
+      <button
+        id="btnLogout"
+        class="text-xs text-slate-500 hover:text-slate-800 hover:underline shrink-0"
+      >Salir</button>
     </div>
   </header>
 
   <main id="main" class="max-w-3xl mx-auto px-4 py-6 pb-24"></main>
 
-  <!-- Templates -->
+  <!-- ============== TEMPLATES ============== -->
+
+  <!-- LOGIN -->
+  <template id="tplLogin">
+    <div class="fade-in max-w-sm mx-auto pt-6 sm:pt-10">
+      <div class="flex justify-center mb-6">
+        <img src="logo.png" alt="Proyecto Sanar" class="max-h-24 sm:max-h-32 w-auto object-contain" onerror="this.style.display='none'" />
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-6">
+        <h1 class="text-xl font-bold text-slate-900 text-center mb-1">Ingresar</h1>
+        <p class="text-sm text-slate-500 text-center mb-5">Elegí tu nombre y poné tu PIN</p>
+
+        <form id="formLogin" class="space-y-4">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="loginPersona">Nombre</label>
+            <select
+              id="loginPersona"
+              required
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            >
+              <option value="">Cargando…</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="loginPin">PIN</label>
+            <input
+              id="loginPin"
+              type="password"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              autocomplete="off"
+              required
+              maxlength="8"
+              placeholder="••••"
+              class="pin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="btnLogin"
+            class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 active:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50"
+          >Entrar</button>
+
+          <div id="loginError" class="text-sm text-red-600 text-center" hidden></div>
+        </form>
+
+        <p class="text-xs text-slate-400 text-center mt-5">
+          Si no sabés tu PIN, pedile ayuda a la supervisora.
+        </p>
+      </div>
+
+      <div class="mt-10 flex flex-col items-center gap-2 opacity-60">
+        <img src="logo-matricia.png" alt="matricia" class="h-10 w-auto" onerror="this.style.display='none'" />
+        <p class="text-xs text-slate-500">SANAR · uso interno</p>
+      </div>
+    </div>
+  </template>
+
+  <!-- CAMBIO DE PIN (forzado si debeCambiarPin) -->
+  <template id="tplCambiarPin">
+    <div class="fade-in max-w-sm mx-auto pt-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-6">
+        <h1 class="text-xl font-bold text-slate-900 mb-1">Cambiá tu PIN</h1>
+        <p class="text-sm text-slate-500 mb-5">
+          Es tu primer ingreso (o te resetearon el PIN). Elegí uno nuevo de 4 dígitos para seguir usando la app.
+        </p>
+
+        <form id="formCambio" class="space-y-4">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="cpActual">PIN actual</label>
+            <input id="cpActual" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required maxlength="6"
+              class="pin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="cpNuevo">PIN nuevo (4 dígitos)</label>
+            <input id="cpNuevo" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required maxlength="4"
+              class="pin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="cpNuevo2">Repetir PIN nuevo</label>
+            <input id="cpNuevo2" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required maxlength="4"
+              class="pin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+
+          <button type="submit" class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50">
+            Guardar
+          </button>
+          <div id="cpError" class="text-sm text-red-600 text-center" hidden></div>
+        </form>
+
+        <button id="btnOmitirCambio" class="w-full mt-3 text-xs text-slate-500 hover:underline" hidden>
+          Omitir y hacer después
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <!-- RESETEAR PIN (solo supervisora / admin) -->
+  <template id="tplResetear">
+    <div class="fade-in max-w-sm mx-auto pt-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-6">
+        <h1 class="text-xl font-bold text-slate-900 mb-1">Resetear PIN</h1>
+        <p class="text-sm text-slate-500 mb-5">
+          Para cuando una colaboradora se olvidó su PIN. Vuelve a ser los últimos 4 números de su DNI y, al entrar, la app le pide elegir uno nuevo.
+        </p>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="rpPersona">Colaboradora</label>
+            <select id="rpPersona" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+              <option value="">Cargando…</option>
+            </select>
+          </div>
+          <button type="button" id="rpBtn" class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50">Resetear PIN</button>
+          <div id="rpConfirmar" class="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-3" hidden>
+            <p id="rpConfirmarTxt" class="text-sm text-amber-900"></p>
+            <div class="flex gap-2">
+              <button type="button" id="rpCancelar" class="flex-1 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold py-3 text-sm">Cancelar</button>
+              <button type="button" id="rpSi" class="flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-sm disabled:opacity-50">Sí, resetear</button>
+            </div>
+          </div>
+          <div id="rpOk" role="status" class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl p-3" hidden></div>
+          <div id="rpError" class="text-sm text-red-600 text-center" hidden></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- HOME -->
   <template id="tplHome">
     <div class="fade-in">
       <div class="flex justify-center mb-8">
-        <img
-          src="logo.png"
-          alt="Proyecto Sanar"
-          class="max-h-24 sm:max-h-32 w-auto object-contain"
-          onerror="this.style.display='none'"
-        />
+        <img src="logo.png" alt="Proyecto Sanar" class="max-h-24 sm:max-h-32 w-auto object-contain" onerror="this.style.display='none'" />
       </div>
 
       <div class="grid gap-4">
-        <a
-          id="linkCargar"
-          class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5"
-          href="#"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a id="linkCargar" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#" target="_blank" rel="noopener noreferrer">
           <div class="flex items-start gap-4">
             <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center text-2xl shrink-0">📝</div>
             <div class="min-w-0">
               <h2 class="text-lg font-semibold text-slate-900">Cargar producción</h2>
               <p class="text-sm text-slate-600 mt-1">Abrir el formulario para registrar el trabajo de hoy.</p>
             </div>
-            <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+            <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
           </div>
         </a>
 
-        <a
-          class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5"
-          href="#/consulta"
-        >
+        <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/consulta">
           <div class="flex items-start gap-4">
             <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center text-2xl shrink-0">📋</div>
             <div class="min-w-0">
-              <h2 class="text-lg font-semibold text-slate-900">Consultar mis registros</h2>
-              <p class="text-sm text-slate-600 mt-1">Ver lo que cargaste este mes y revisar si falta algo.</p>
+              <h2 id="consultaTitulo" class="text-lg font-semibold text-slate-900">Consultar mis registros</h2>
+              <p id="consultaDesc" class="text-sm text-slate-600 mt-1">Ver lo que cargaste este mes y revisar si falta algo.</p>
             </div>
-            <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+            <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </div>
+        </a>
+
+        <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-4" href="#/cambiar-pin">
+          <div class="flex items-center gap-3 text-slate-600">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 grid place-items-center text-base shrink-0">🔒</div>
+            <div class="text-sm">Cambiar mi PIN</div>
+          </div>
+        </a>
+
+        <a id="linkResetear" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-4" href="#/resetear-pin" hidden>
+          <div class="flex items-center gap-3 text-slate-600">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 grid place-items-center text-base shrink-0">🔑</div>
+            <div class="text-sm">Resetear el PIN de una colaboradora</div>
           </div>
         </a>
       </div>
 
-      <div class="mt-10 flex flex-col items-center gap-2">
-        <img
-          src="logo-matricia.png"
-          alt="matricia"
-          class="h-10 w-auto opacity-80"
-          onerror="this.style.display='none'"
-        />
+      <div class="mt-10 flex flex-col items-center gap-2 opacity-60">
+        <img src="logo-matricia.png" alt="matricia" class="h-10 w-auto" onerror="this.style.display='none'" />
         <p class="text-xs text-slate-500">SANAR · uso interno</p>
       </div>
     </div>
   </template>
 
+  <!-- CONSULTA (sin dropdown de persona: el scope viene de la sesión) -->
   <template id="tplConsulta">
     <div class="fade-in space-y-4">
-      <!-- Filtros -->
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
-        <div>
-          <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="fPersona">Colaboradora</label>
-          <select
-            id="fPersona"
-            class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          >
-            <option value="">Elegí tu nombre…</option>
-          </select>
-        </div>
+      <section id="selPersonaWrap" class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5" hidden>
+        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="fPersona">Colaboradora</label>
+        <select id="fPersona" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+          <option value="">Cargando…</option>
+        </select>
+        <p class="text-xs text-slate-500 mt-2">Ves lo mismo que ve ella en su pantalla.</p>
+      </section>
 
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="fMes">Mes</label>
-            <select
-              id="fMes"
-              class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            ></select>
+            <select id="fMes" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></select>
           </div>
           <div>
             <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="fBuscar">Buscar</label>
-            <input
-              id="fBuscar"
-              type="search"
-              placeholder="producto, fecha…"
-              class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            />
+            <input id="fBuscar" type="search" placeholder="producto, fecha…" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
           </div>
         </div>
       </section>
 
-      <!-- Resumen del mes -->
       <section id="resumenMes" class="grid grid-cols-3 gap-2" hidden>
         <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
           <div class="text-xs uppercase tracking-wide text-slate-500">Días</div>
@@ -191,13 +313,11 @@
         </div>
       </section>
 
-      <!-- Estados -->
       <div id="estado" class="text-center py-10 text-slate-500 text-sm" hidden>
         <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
         <div id="estadoTxt">Cargando…</div>
       </div>
 
-      <!-- Lista de registros -->
       <section id="lista" class="space-y-3"></section>
 
       <div id="vacio" class="hidden text-center py-12 text-slate-500">
@@ -224,10 +344,7 @@
       <div class="mt-3 text-sm text-slate-600" data-slot="jornada"></div>
 
       <div class="mt-3 text-xs">
-        <span
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-brand-50 text-brand-700 font-medium"
-          data-slot="actividad"
-        ></span>
+        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-brand-50 text-brand-700 font-medium" data-slot="actividad"></span>
       </div>
 
       <div class="mt-3 border-t border-slate-100 pt-3" data-slot="trabajosWrap" hidden>
@@ -244,33 +361,55 @@
 
   <!-- ================== SCRIPT ================== -->
   <script>
-    // ---------------------------------------------------------------------
-    // CONFIGURACIÓN — reemplazar antes de subir la app
-    // ---------------------------------------------------------------------
+    // =====================================================================
+    // CONFIG — URLs
+    // =====================================================================
     const CONFIG = {
-      // URL de tu Web App de Google Apps Script (termina en .../exec)
-      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxiw3gN0HgRvT93oHsLZXvr-F0npwYMeA4j2s4i6u-W-mnCILU9f7k2NkdsmdMlXEp2/exec',
-      // URL del formulario Google para "Cargar producción"
+      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwgxBv6ElWNWT0c3WNgF0uwJWR_qAZRxHOj7VafAoi_iexYOkM2Isv9ipu6Q5WLv9FM/exec',
       GOOGLE_FORM_URL: 'https://forms.gle/cT4j7qkmeyXSjayu7',
     };
-    // ---------------------------------------------------------------------
+
+    // =====================================================================
+    // Estado + sesión
+    // =====================================================================
+    const SESSION_KEY = 'sanar.session.v2';
 
     const state = {
-      colaboradoras: [],
+      session: loadSession(),
       registros: [],
       filtros: {
-        persona: localStorage.getItem('sanar.persona') || '',
         mes: localStorage.getItem('sanar.mes') || mesActualISO(),
         buscar: '',
+        persona: localStorage.getItem('sanar.verPersona') || '',
       },
     };
 
+    function loadSession() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return null;
+        const s = JSON.parse(raw);
+        if (!s.token || !s.persona) return null;
+        return s;
+      } catch { return null; }
+    }
+    function saveSession(s) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+      state.session = s;
+    }
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+      state.session = null;
+    }
+
+    // =====================================================================
+    // Utils de fecha
+    // =====================================================================
     function mesActualISO() {
       const d = new Date();
       const p = n => String(n).padStart(2, '0');
       return d.getFullYear() + '-' + p(d.getMonth() + 1);
     }
-
     function primerDiaDelMes(mesISO) {
       const [y, m] = mesISO.split('-').map(Number);
       return new Date(y, m - 1, 1);
@@ -285,70 +424,268 @@
     }
     function formatFechaLegible(iso) {
       const [y, m, d] = iso.split('-').map(Number);
-      const fecha = new Date(y, m - 1, d);
-      return fecha.toLocaleDateString('es-AR', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
+      return new Date(y, m - 1, d).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
     }
 
-    // ---------------------------------------------------------------------
-    // Router (hash)
-    // ---------------------------------------------------------------------
+    // =====================================================================
+    // Router
+    // =====================================================================
     function router() {
+      // Sin sesión → login (independiente del hash)
+      if (!state.session) {
+        mountLogin();
+        return;
+      }
       const hash = location.hash || '#/';
       if (hash.startsWith('#/consulta')) return mountConsulta();
+      if (hash.startsWith('#/cambiar-pin')) return mountCambiarPin();
+      if (hash.startsWith('#/resetear-pin')) return mountResetear();
       return mountHome();
     }
     window.addEventListener('hashchange', router);
 
-    // ---------------------------------------------------------------------
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btnLogout').onclick = () => {
+        if (confirm('¿Cerrar sesión?')) {
+          clearSession();
+          location.hash = '#/';
+          router();
+        }
+      };
+      router();
+    });
+
+    // =====================================================================
+    // HEADER switching
+    // =====================================================================
+    function showHeader(show) {
+      document.getElementById('appHeader').hidden = !show;
+    }
+    function setHeader({ back, subtitle }) {
+      document.getElementById('btnBack').classList.toggle('hidden', !back);
+      if (back) document.getElementById('btnBack').onclick = () => (location.hash = '#/');
+      document.getElementById('headerPersona').textContent = state.session ? state.session.persona : '';
+      document.getElementById('headerSubtitle').textContent = subtitle || '';
+    }
+
+    // =====================================================================
+    // LOGIN
+    // =====================================================================
+    function mountLogin() {
+      showHeader(false);
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      const node = document.getElementById('tplLogin').content.cloneNode(true);
+      main.appendChild(node);
+
+      cargarOpcionesLogin();
+
+      document.getElementById('formLogin').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const persona = document.getElementById('loginPersona').value;
+        const pin = document.getElementById('loginPin').value.trim();
+        const btn = document.getElementById('btnLogin');
+        const errEl = document.getElementById('loginError');
+        errEl.hidden = true;
+
+        if (!persona) { errEl.textContent = 'Elegí tu nombre.'; errEl.hidden = false; return; }
+        if (!/^\d{4,8}$/.test(pin)) { errEl.textContent = 'El PIN debe tener entre 4 y 8 números.'; errEl.hidden = false; return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Entrando…';
+        try {
+          const data = await apiRaw({ action: 'login', persona, pin });
+          if (!data.ok) throw new Error(data.error || 'Error de login');
+          saveSession({
+            token: data.token,
+            persona: data.persona,
+            rol: data.rol,
+            debeCambiarPin: data.debeCambiarPin,
+          });
+          location.hash = data.debeCambiarPin ? '#/cambiar-pin' : '#/';
+          router();
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.hidden = false;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Entrar';
+        }
+      });
+    }
+
+    async function cargarOpcionesLogin() {
+      const sel = document.getElementById('loginPersona');
+      try {
+        const data = await apiRaw({ action: 'login_options' });
+        if (!data.ok) throw new Error(data.error || 'no se cargó');
+        sel.innerHTML = '<option value="">Elegí tu nombre…</option>';
+        for (const p of data.personas) {
+          const opt = document.createElement('option');
+          opt.value = p.persona;
+          opt.textContent = p.persona;
+          sel.appendChild(opt);
+        }
+      } catch (err) {
+        sel.innerHTML = '<option value="">(error al cargar: ' + err.message + ')</option>';
+      }
+    }
+
+    // =====================================================================
+    // CAMBIAR PIN
+    // =====================================================================
+    function mountCambiarPin() {
+      showHeader(true);
+      setHeader({ back: !state.session.debeCambiarPin, subtitle: 'Cambiar PIN' });
+
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      const node = document.getElementById('tplCambiarPin').content.cloneNode(true);
+      main.appendChild(node);
+
+      document.getElementById('formCambio').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pinActual = document.getElementById('cpActual').value.trim();
+        const pinNuevo = document.getElementById('cpNuevo').value.trim();
+        const pinNuevo2 = document.getElementById('cpNuevo2').value.trim();
+        const errEl = document.getElementById('cpError');
+        errEl.hidden = true;
+
+        if (!/^\d{4}$/.test(pinNuevo)) { errEl.textContent = 'El PIN nuevo debe tener 4 dígitos.'; errEl.hidden = false; return; }
+        if (pinNuevo !== pinNuevo2) { errEl.textContent = 'Los dos PINs nuevos no coinciden.'; errEl.hidden = false; return; }
+
+        try {
+          const data = await api({ action: 'cambiar_pin', pinActual, pinNuevo });
+          if (!data.ok) throw new Error(data.error || 'Error');
+          // Marcar sesión como ya cambiada
+          state.session.debeCambiarPin = false;
+          saveSession(state.session);
+          alert('Listo. Tu PIN se cambió correctamente.');
+          location.hash = '#/';
+          router();
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.hidden = false;
+        }
+      });
+    }
+
+    // =====================================================================
     // HOME
-    // ---------------------------------------------------------------------
+    // =====================================================================
     function mountHome() {
-      document.getElementById('btnBack').classList.add('hidden');
-      document.getElementById('headerSubtitle').textContent = 'Inicio';
+      // Si debe cambiar PIN, lo mandamos a esa pantalla
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+
+      showHeader(true);
+      setHeader({ back: false, subtitle: 'Inicio' });
+
       const main = document.getElementById('main');
       main.innerHTML = '';
       const node = document.getElementById('tplHome').content.cloneNode(true);
 
-      // Link a Google Form
+      if (esGestion()) {
+        node.getElementById('linkResetear').hidden = false;
+        node.getElementById('consultaTitulo').textContent = 'Consultar registros de las colaboradoras';
+        node.getElementById('consultaDesc').textContent = 'Elegí una colaboradora y mirá lo mismo que ve ella en su pantalla.';
+      }
+
       const linkCargar = node.getElementById('linkCargar');
       if (CONFIG.GOOGLE_FORM_URL && !CONFIG.GOOGLE_FORM_URL.startsWith('PONER_')) {
         linkCargar.href = CONFIG.GOOGLE_FORM_URL;
       } else {
         linkCargar.addEventListener('click', e => {
           e.preventDefault();
-          alert('Falta configurar la URL del formulario en index.html (CONFIG.GOOGLE_FORM_URL).');
+          alert('Falta configurar la URL del formulario en index.html.');
         });
       }
 
       main.appendChild(node);
     }
 
-    // ---------------------------------------------------------------------
+    // =====================================================================
+    // RESETEAR PIN (supervisora / admin; el backend vuelve a validar el rol)
+    // =====================================================================
+    const ROLES_GESTION = ['supervisora', 'admin'];
+    function esGestion() {
+      return !!state.session && ROLES_GESTION.includes(state.session.rol);
+    }
+
+    function mountResetear() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Resetear PIN' });
+
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplResetear').content.cloneNode(true));
+
+      const sel = document.getElementById('rpPersona');
+      const conf = document.getElementById('rpConfirmar');
+      const btnSi = document.getElementById('rpSi');
+      const okEl = document.getElementById('rpOk');
+      const errEl = document.getElementById('rpError');
+      const limpiar = () => { conf.hidden = true; okEl.hidden = true; errEl.hidden = true; };
+
+      api({ action: 'listar_colaboradoras' }).then(data => {
+        sel.innerHTML = '<option value="">Elegí la colaboradora…</option>';
+        for (const p of data.colaboradoras) {
+          const opt = document.createElement('option');
+          opt.value = p.persona;
+          opt.textContent = p.persona;
+          sel.appendChild(opt);
+        }
+      }).catch(err => {
+        sel.innerHTML = '<option value="">(no se pudo cargar la lista)</option>';
+        errEl.textContent = err.message;
+        errEl.hidden = false;
+      });
+
+      sel.addEventListener('change', limpiar);
+      document.getElementById('rpBtn').addEventListener('click', () => {
+        limpiar();
+        if (!sel.value) { errEl.textContent = 'Elegí una colaboradora.'; errEl.hidden = false; return; }
+        document.getElementById('rpConfirmarTxt').textContent =
+          '¿Resetear el PIN de ' + sel.value + '? Va a entrar con los últimos 4 números de su DNI y la app le va a pedir elegir uno nuevo.';
+        conf.hidden = false;
+      });
+      document.getElementById('rpCancelar').addEventListener('click', limpiar);
+      btnSi.addEventListener('click', async () => {
+        btnSi.disabled = true;
+        try {
+          const data = await api({ action: 'resetear_pin', persona: sel.value });
+          conf.hidden = true;
+          okEl.textContent = 'Listo. ' + data.persona + ' ya puede entrar con los últimos 4 números de su DNI.';
+          okEl.hidden = false;
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.hidden = false;
+        } finally {
+          btnSi.disabled = false;
+        }
+      });
+    }
+
+    // =====================================================================
     // CONSULTA
-    // ---------------------------------------------------------------------
+    // =====================================================================
     function mountConsulta() {
-      const btn = document.getElementById('btnBack');
-      btn.classList.remove('hidden');
-      btn.onclick = () => (location.hash = '#/');
-      document.getElementById('headerSubtitle').textContent = 'Mis registros';
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: esGestion() ? 'Registros de las colaboradoras' : 'Mis registros' });
 
       const main = document.getElementById('main');
       main.innerHTML = '';
       const node = document.getElementById('tplConsulta').content.cloneNode(true);
       main.appendChild(node);
 
-      inicializarFiltros();
-      cargarColaboradoras();
-      cargarRegistros();
-    }
+      if (esGestion()) prepararSelectorPersona();
 
-    function inicializarFiltros() {
+      // Dropdown de meses
       const selMes = document.getElementById('fMes');
-      // opciones: mes actual + los 11 anteriores
       const hoy = new Date();
       selMes.innerHTML = '';
       for (let i = 0; i < 12; i++) {
@@ -366,13 +703,6 @@
         cargarRegistros();
       });
 
-      const selPersona = document.getElementById('fPersona');
-      selPersona.addEventListener('change', () => {
-        state.filtros.persona = selPersona.value;
-        localStorage.setItem('sanar.persona', selPersona.value);
-        cargarRegistros();
-      });
-
       const inpBuscar = document.getElementById('fBuscar');
       let deb;
       inpBuscar.addEventListener('input', () => {
@@ -382,43 +712,50 @@
           render();
         }, 200);
       });
+
+      if (!esGestion()) cargarRegistros();
     }
 
-    async function cargarColaboradoras() {
+    async function prepararSelectorPersona() {
+      const sel = document.getElementById('fPersona');
+      document.getElementById('selPersonaWrap').hidden = false;
+      mostrarEstado('Cargando la lista de colaboradoras…', true);
       try {
-        const data = await api({ action: 'colaboradoras' });
-        state.colaboradoras = data.colaboradoras || [];
-        const sel = document.getElementById('fPersona');
-        // preservar opción "elegir"
-        const first = sel.firstElementChild;
-        sel.innerHTML = '';
-        sel.appendChild(first);
-        state.colaboradoras.forEach(n => {
+        const data = await api({ action: 'listar_colaboradoras' });
+        sel.innerHTML = '<option value="">Elegí una colaboradora…</option>';
+        for (const p of data.colaboradoras) {
           const opt = document.createElement('option');
-          opt.value = n;
-          opt.textContent = n;
+          opt.value = p.persona;
+          opt.textContent = p.persona;
           sel.appendChild(opt);
-        });
-        if (state.filtros.persona && state.colaboradoras.includes(state.filtros.persona)) {
-          sel.value = state.filtros.persona;
         }
+        if (!data.colaboradoras.some(p => p.persona === state.filtros.persona)) state.filtros.persona = '';
+        sel.value = state.filtros.persona;
       } catch (err) {
+        sel.innerHTML = '<option value="">(no se pudo cargar la lista)</option>';
         mostrarEstado('No se pudo cargar la lista de colaboradoras: ' + err.message);
+        return;
       }
+      sel.addEventListener('change', () => {
+        state.filtros.persona = sel.value;
+        localStorage.setItem('sanar.verPersona', sel.value);
+        cargarRegistros();
+      });
+      cargarRegistros();
     }
 
     async function cargarRegistros() {
-      const { persona, mes } = state.filtros;
-      if (!persona) {
-        state.registros = [];
-        render();
-        return;
-      }
+      const { mes, persona } = state.filtros;
       const desde = formatFechaISO(primerDiaDelMes(mes));
       const hasta = formatFechaISO(ultimoDiaDelMes(mes));
+      const params = { action: 'registros', desde, hasta };
+      if (esGestion()) {
+        if (!persona) { mostrarEstado('Elegí una colaboradora para ver sus registros.'); return; }
+        params.persona = persona;
+      }
       mostrarEstado('Cargando registros…', true);
       try {
-        const data = await api({ action: 'registros', persona, desde, hasta });
+        const data = await api(params);
         state.registros = data.registros || [];
         render();
       } catch (err) {
@@ -428,6 +765,7 @@
 
     function mostrarEstado(msg, spinner = false) {
       const est = document.getElementById('estado');
+      if (!est) return;
       est.hidden = false;
       document.getElementById('estadoTxt').textContent = msg;
       est.querySelector('.animate-spin').style.display = spinner ? 'inline-block' : 'none';
@@ -436,9 +774,7 @@
       document.getElementById('resumenMes').hidden = true;
     }
 
-    function ocultarEstado() {
-      document.getElementById('estado').hidden = true;
-    }
+    function ocultarEstado() { const e = document.getElementById('estado'); if (e) e.hidden = true; }
 
     function render() {
       ocultarEstado();
@@ -447,28 +783,15 @@
       const resumen = document.getElementById('resumenMes');
       lista.innerHTML = '';
 
-      if (!state.filtros.persona) {
-        vacio.hidden = false;
-        vacio.querySelector('p.font-medium').textContent = 'Elegí tu nombre para empezar';
-        vacio.querySelector('p.text-sm').textContent = 'Los registros se cargan según la persona seleccionada.';
-        resumen.hidden = true;
-        return;
-      }
-      vacio.querySelector('p.font-medium').textContent = 'No hay registros para mostrar';
-      vacio.querySelector('p.text-sm').textContent = 'Cambiá el mes o el filtro para ver otros.';
-
       const q = state.filtros.buscar;
       const filtrados = state.registros.filter(r => {
         if (!q) return true;
-        const hay =
-          (r.fecha || '').includes(q) ||
-          (r.actividad || '').toLowerCase().includes(q) ||
-          (r.productos || []).some(p => (p.nombre || '').toLowerCase().includes(q)) ||
-          (r.trabajos_por_hora || []).some(t => (t.tipo || '').toLowerCase().includes(q));
-        return hay;
+        return (r.fecha || '').includes(q)
+          || (r.actividad || '').toLowerCase().includes(q)
+          || (r.productos || []).some(p => (p.nombre || '').toLowerCase().includes(q))
+          || (r.trabajos_por_hora || []).some(t => (t.tipo || '').toLowerCase().includes(q));
       });
 
-      // Resumen (horas = suma de "Cantidad de horas (1)" + "(2)")
       const totalHoras = filtrados.reduce((s, r) => s + (r.horas_billables || 0), 0);
       const totalProds = filtrados.reduce((s, r) => s + (r.cantidad_productos || 0), 0);
       document.getElementById('rDias').textContent = String(filtrados.length);
@@ -476,10 +799,7 @@
       document.getElementById('rProds').textContent = totalProds.toLocaleString('es-AR');
       resumen.hidden = false;
 
-      if (filtrados.length === 0) {
-        vacio.hidden = false;
-        return;
-      }
+      if (filtrados.length === 0) { vacio.hidden = false; return; }
       vacio.hidden = true;
 
       const tpl = document.getElementById('tplRegistro');
@@ -487,15 +807,11 @@
         const node = tpl.content.cloneNode(true);
         node.querySelector('[data-slot="dia"]').textContent = r.dia_semana || '';
         node.querySelector('[data-slot="fecha"]').textContent = formatFechaLegible(r.fecha);
-        const horasCard = (r.horas_billables && r.horas_billables > 0)
-          ? r.horas_billables
-          : r.horas_trabajadas;
-        node.querySelector('[data-slot="horas"]').textContent =
-          horasCard != null && horasCard !== 0
-            ? String(horasCard).replace('.', ',') + ' hs'
-            : '—';
 
-        // Jornada
+        const horasCard = (r.horas_billables && r.horas_billables > 0) ? r.horas_billables : r.horas_trabajadas;
+        node.querySelector('[data-slot="horas"]').textContent =
+          horasCard != null && horasCard !== 0 ? String(horasCard).replace('.', ',') + ' hs' : '—';
+
         const jornada = [];
         if (r.ingreso) jornada.push('Ingreso ' + r.ingreso);
         if (r.egreso) jornada.push('Egreso ' + r.egreso);
@@ -504,7 +820,6 @@
 
         node.querySelector('[data-slot="actividad"]').textContent = r.actividad || 'Sin actividad';
 
-        // Trabajos por hora
         const trabWrap = node.querySelector('[data-slot="trabajosWrap"]');
         const trabUl = node.querySelector('[data-slot="trabajos"]');
         if (r.trabajos_por_hora && r.trabajos_por_hora.length) {
@@ -512,20 +827,13 @@
           for (const t of r.trabajos_por_hora) {
             const li = document.createElement('li');
             li.className = 'flex justify-between gap-2';
-            const span1 = document.createElement('span');
-            span1.className = 'truncate';
-            span1.textContent = t.tipo;
-            const span2 = document.createElement('span');
-            span2.className = 'font-semibold text-slate-900 shrink-0';
-            const horasFmt = String(t.horas).replace('.', ',');
-            span2.textContent = horasFmt + ' hs';
-            li.appendChild(span1);
-            li.appendChild(span2);
-            trabUl.appendChild(li);
+            const s1 = document.createElement('span'); s1.className = 'truncate'; s1.textContent = t.tipo;
+            const s2 = document.createElement('span'); s2.className = 'font-semibold text-slate-900 shrink-0';
+            s2.textContent = String(t.horas).replace('.', ',') + ' hs';
+            li.appendChild(s1); li.appendChild(s2); trabUl.appendChild(li);
           }
         }
 
-        // Productos
         const prodsWrap = node.querySelector('[data-slot="productosWrap"]');
         const prodsUl = node.querySelector('[data-slot="productos"]');
         if (r.productos && r.productos.length) {
@@ -533,42 +841,44 @@
           for (const p of r.productos) {
             const li = document.createElement('li');
             li.className = 'flex justify-between gap-2';
-            const span1 = document.createElement('span');
-            span1.className = 'truncate';
-            span1.textContent = p.nombre;
-            const span2 = document.createElement('span');
-            span2.className = 'font-semibold text-slate-900 shrink-0';
-            span2.textContent = p.cantidad.toLocaleString('es-AR');
-            li.appendChild(span1);
-            li.appendChild(span2);
-            prodsUl.appendChild(li);
+            const s1 = document.createElement('span'); s1.className = 'truncate'; s1.textContent = p.nombre;
+            const s2 = document.createElement('span'); s2.className = 'font-semibold text-slate-900 shrink-0';
+            s2.textContent = p.cantidad.toLocaleString('es-AR');
+            li.appendChild(s1); li.appendChild(s2); prodsUl.appendChild(li);
           }
         }
+
         lista.appendChild(node);
       }
     }
 
-    // ---------------------------------------------------------------------
+    // =====================================================================
     // API
-    // ---------------------------------------------------------------------
-    async function api(params) {
+    // =====================================================================
+    async function apiRaw(params) {
       if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.startsWith('PONER_')) {
-        throw new Error('Falta configurar CONFIG.APPS_SCRIPT_URL en index.html.');
+        throw new Error('Falta configurar APPS_SCRIPT_URL en index.html.');
       }
       const url = new URL(CONFIG.APPS_SCRIPT_URL);
       for (const [k, v] of Object.entries(params)) if (v != null) url.searchParams.set(k, v);
-
       const res = await fetch(url.toString(), { method: 'GET' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'error del servidor');
-      return data;
+      return res.json();
     }
 
-    // ---------------------------------------------------------------------
-    // Boot
-    // ---------------------------------------------------------------------
-    router();
+    async function api(params) {
+      if (!state.session) throw new Error('Sin sesión');
+      const withToken = Object.assign({ token: state.session.token }, params);
+      const data = await apiRaw(withToken);
+      if (!data.ok && data.code === 'AUTH_REQUIRED') {
+        clearSession();
+        location.hash = '#/';
+        router();
+        throw new Error('Tu sesión expiró. Volvé a entrar.');
+      }
+      if (!data.ok) throw new Error(data.error || 'Error del servidor');
+      return data;
+    }
   </script>
 </body>
 </html>
