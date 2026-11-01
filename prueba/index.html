@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>SANAR · Mis Registros</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: {
+              50:  '#f0fdfa',
+              100: '#ccfbf1',
+              200: '#99f6e4',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+              800: '#115e59',
+            },
+          },
+          boxShadow: {
+            card: '0 4px 20px -2px rgba(15, 118, 110, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
+            'card-hover': '0 10px 30px -6px rgba(15, 118, 110, 0.18), 0 4px 10px -2px rgba(0, 0, 0, 0.05)',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    html, body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    .card-tap { transition: transform .08s ease-out, box-shadow .18s ease-out; }
+    .card-tap:active { transform: scale(0.98); }
+    @media (hover: hover) { .card-tap:hover { transform: translateY(-2px); } }
+    .fade-in { animation: fadeIn .18s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    [hidden] { display: none !important; }
+    /* Resumen para Melina: al imprimir (o guardar como PDF) sale solo la tabla */
+    @media print {
+      @page { size: A4 landscape; margin: 12mm; }
+      #appHeader, .no-print { display: none !important; }
+      body { background: #fff; }
+      main { max-width: none !important; padding: 0 !important; }
+      #lrHoja { border: 0 !important; box-shadow: none !important; padding: 0 !important; overflow: visible !important; }
+    }
+
+    /* Input numérico tipo PIN: digits grandes */
+    .pin-input {
+      font-size: 1.5rem;
+      letter-spacing: 0.4em;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen antialiased">
+  <!-- ================== HEADER ================== -->
+  <header id="appHeader" class="bg-white border-b border-slate-200 sticky top-0 z-10" hidden>
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+      <button
+        id="btnBack"
+        class="flex items-center gap-1 pl-2 pr-3 py-2 -ml-2 rounded-full hover:bg-slate-100 active:bg-slate-200 text-slate-700 font-medium text-sm hidden"
+        aria-label="Volver al inicio"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        <span>Volver</span>
+      </button>
+      <div class="flex items-center gap-2 min-w-0 flex-1">
+        <img
+          src="../logo.png"
+          alt="Proyecto Sanar"
+          class="h-9 w-auto object-contain shrink-0"
+          onerror="this.style.display='none'"
+        />
+        <div class="min-w-0">
+          <div id="headerPersona" class="text-sm font-semibold text-slate-900 truncate leading-tight"></div>
+          <div id="headerSubtitle" class="text-xs text-slate-500 leading-tight truncate">Mis registros</div>
+        </div>
+      </div>
+      <button
+        id="btnLogout"
+        class="text-xs text-slate-500 hover:text-slate-800 hover:underline shrink-0"
+      >Salir</button>
+    </div>
+  </header>
+
+  <main id="main" class="max-w-3xl mx-auto px-4 py-6 pb-24"></main>
+
+  <!-- ============== TEMPLATES ============== -->
+
+  <!-- LOGIN -->
+  <template id="tplLogin">
+    <div class="fade-in max-w-sm mx-auto pt-6 sm:pt-10">
+      <div class="flex justify-center mb-6">
+        <img src="../logo.png" alt="Proyecto Sanar" class="max-h-24 sm:max-h-32 w-auto object-contain" onerror="this.style.display='none'" />
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-6">
+        <h1 class="text-xl font-bold text-slate-900 text-center mb-1">Ingresar</h1>
+        <p class="text-sm text-slate-500 text-center mb-5">Elegí tu nombre y poné tu PIN</p>
+
+        <form id="formLogin" class="space-y-4">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="loginPersona">Nombre</label>
+            <select
+              id="loginPersona"
+              required
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            >
+              <option value="">Cargando…</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="loginPin">PIN</label>
+            <input
+              id="loginPin"
+              type="password"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              autocomplete="off"
+              required
+              maxlength="8"
+              placeholder="••••"
+              class="pin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="btnLogin"
+            class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 active:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50"
+          >Entrar</button>
+
+          <div id="loginError" class="text-sm text-red-600 text-center" hidden></div>
+        </form>
+
+        <p class="text-xs text-slate-400 text-center mt-5">
+          Si no sabés tu PIN, pedile ayuda a la supervisora.
+        </p>
+      </div>
+
+      <div class="mt-10 flex flex-col items-center gap-2 opacity-60">
+        <img src="../logo-matricia.png" alt="matricia" class="h-10 w-auto" onerror="this.style.display='none'" />
+        <p class="text-xs text-slate-500">SANAR · uso interno</p>
+      </div>
+    </div>
+  </template>
+
+  <!-- CAMBIO DE PIN (forzado si debeCambiarPin) -->
+  <template id="tplCambiarPin">
+    <div class="fade-in max-w-sm mx-auto pt-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-6">
+        <h1 class="text-xl font-bold text-slate-900 mb-1">Cambiá tu PIN</h1>
+        <p class="text-sm text-slate-500 mb-5">
+          Es tu primer ingreso (o te resetearon el PIN). Elegí uno nuevo de 4 dígitos para seguir usando la app.
+        </p>
+
+        <form id="formCambio" class="space-y-4">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="cpActual">PIN actual</label>
+            <input id="cpActual" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required maxlength="6"
+              class="pin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="cpNuevo">PIN nuevo (4 dígitos)</label>
+            <input id="cpNuevo" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required maxlength="4"
+              class="pin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="cpNuevo2">Repetir PIN nuevo</label>
+            <input id="cpNuevo2" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required maxlength="4"
+              class="pin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+
+          <button type="submit" class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50">
+            Guardar
+          </button>
+          <div id="cpError" class="text-sm text-red-600 text-center" hidden></div>
+        </form>
+
+        <button id="btnOmitirCambio" class="w-full mt-3 text-xs text-slate-500 hover:underline" hidden>
+          Omitir y hacer después
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <!-- RESETEAR PIN (solo supervisora / admin) -->
+  <template id="tplResetear">
+    <div class="fade-in max-w-sm mx-auto pt-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-6">
+        <h1 class="text-xl font-bold text-slate-900 mb-1">Resetear PIN</h1>
+        <p class="text-sm text-slate-500 mb-5">
+          Para cuando una colaboradora se olvidó su PIN. Vuelve a ser los últimos 4 números de su DNI y, al entrar, la app le pide elegir uno nuevo.
+        </p>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="rpPersona">Colaboradora</label>
+            <select id="rpPersona" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+              <option value="">Cargando…</option>
+            </select>
+          </div>
+          <button type="button" id="rpBtn" class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50">Resetear PIN</button>
+          <div id="rpConfirmar" class="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-3" hidden>
+            <p id="rpConfirmarTxt" class="text-sm text-amber-900"></p>
+            <div class="flex gap-2">
+              <button type="button" id="rpCancelar" class="flex-1 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold py-3 text-sm">Cancelar</button>
+              <button type="button" id="rpSi" class="flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-sm disabled:opacity-50">Sí, resetear</button>
+            </div>
+          </div>
+          <div id="rpOk" role="status" class="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl p-3" hidden></div>
+          <div id="rpError" class="text-sm text-red-600 text-center" hidden></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- HOME -->
+  <template id="tplHome">
+    <div class="fade-in">
+      <div class="flex justify-center mb-8">
+        <img src="../logo.png" alt="Proyecto Sanar" class="max-h-24 sm:max-h-32 w-auto object-contain" onerror="this.style.display='none'" />
+      </div>
+
+      <div class="grid gap-4">
+        <a id="linkCargar" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#" target="_blank" rel="noopener noreferrer">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center text-2xl shrink-0">📝</div>
+            <div class="min-w-0">
+              <h2 class="text-lg font-semibold text-slate-900">Cargar producción</h2>
+              <p class="text-sm text-slate-600 mt-1">Abrir el formulario para registrar el trabajo de hoy.</p>
+            </div>
+            <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </div>
+        </a>
+
+        <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/consulta">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center text-2xl shrink-0">📋</div>
+            <div class="min-w-0">
+              <h2 id="consultaTitulo" class="text-lg font-semibold text-slate-900">Consultar mis registros</h2>
+              <p id="consultaDesc" class="text-sm text-slate-600 mt-1">Ver lo que cargaste este mes y revisar si falta algo.</p>
+            </div>
+            <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </div>
+        </a>
+
+        <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-4" href="#/cambiar-pin">
+          <div class="flex items-center gap-3 text-slate-600">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 grid place-items-center text-base shrink-0">🔒</div>
+            <div class="text-sm">Cambiar mi PIN</div>
+          </div>
+        </a>
+
+        <a id="linkResetear" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-4" href="#/resetear-pin" hidden>
+          <div class="flex items-center gap-3 text-slate-600">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 grid place-items-center text-base shrink-0">🔑</div>
+            <div class="text-sm">Resetear el PIN de una colaboradora</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="mt-10 flex flex-col items-center gap-2 opacity-60">
+        <img src="../logo-matricia.png" alt="matricia" class="h-10 w-auto" onerror="this.style.display='none'" />
+        <p class="text-xs text-slate-500">SANAR · uso interno</p>
+      </div>
+    </div>
+  </template>
+
+  <!-- CONSULTA (sin dropdown de persona: el scope viene de la sesión) -->
+  <template id="tplConsulta">
+    <div class="fade-in space-y-4">
+      <section id="selPersonaWrap" class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5" hidden>
+        <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="fPersona">Colaboradora</label>
+        <select id="fPersona" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+          <option value="">Cargando…</option>
+        </select>
+        <p class="text-xs text-slate-500 mt-2">Ves lo mismo que ve ella en su pantalla.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="fMes">Mes</label>
+            <select id="fMes" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="fBuscar">Buscar</label>
+            <input id="fBuscar" type="search" placeholder="producto, fecha…" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+        </div>
+      </section>
+
+      <section id="resumenMes" class="grid grid-cols-3 gap-2" hidden>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Días</div>
+          <div id="rDias" class="text-xl font-bold text-slate-900">0</div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Horas</div>
+          <div id="rHoras" class="text-xl font-bold text-slate-900">0</div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Productos</div>
+          <div id="rProds" class="text-xl font-bold text-slate-900">0</div>
+        </div>
+      </section>
+
+      <div id="estado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div id="estadoTxt">Cargando…</div>
+      </div>
+
+      <section id="lista" class="space-y-3"></section>
+
+      <div id="vacio" class="hidden text-center py-12 text-slate-500">
+        <div class="text-5xl mb-3">🔍</div>
+        <p class="font-medium text-slate-700">No hay registros para mostrar</p>
+        <p class="text-sm mt-1">Cambiá el mes o el filtro para ver otros.</p>
+      </div>
+    </div>
+  </template>
+
+  <template id="tplRegistro">
+    <article class="bg-white rounded-2xl border border-slate-200 shadow-card p-4">
+      <header class="flex items-baseline justify-between gap-2">
+        <div>
+          <div class="text-xs uppercase tracking-wide text-brand-700 font-semibold" data-slot="dia"></div>
+          <div class="text-lg font-bold text-slate-900" data-slot="fecha"></div>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Horas</div>
+          <div class="text-lg font-semibold text-slate-900" data-slot="horas"></div>
+        </div>
+      </header>
+
+      <div class="mt-3 text-sm text-slate-600" data-slot="jornada"></div>
+
+      <div class="mt-3 text-xs">
+        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-brand-50 text-brand-700 font-medium" data-slot="actividad"></span>
+      </div>
+
+      <div class="mt-3 border-t border-slate-100 pt-3" data-slot="trabajosWrap" hidden>
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Trabajo por hora</div>
+        <ul class="text-sm text-slate-700 space-y-1" data-slot="trabajos"></ul>
+      </div>
+
+      <div class="mt-3 border-t border-slate-100 pt-3" data-slot="productosWrap" hidden>
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Productos</div>
+        <ul class="text-sm text-slate-700 space-y-1" data-slot="productos"></ul>
+      </div>
+    </article>
+  </template>
+
+  <!-- BLOQUE DE CONTEO EN EL INICIO (contadora / supervisora / admin) -->
+  <template id="tplHomeConteo">
+    <section class="grid gap-4" aria-label="Conteo">
+      <a id="linkConteoForm" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#" target="_blank" rel="noopener noreferrer">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-2xl shrink-0">🧺</div>
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-slate-900">Cargar conteo</h2>
+            <p class="text-sm text-slate-600 mt-1">Abrir el formulario para registrar un canasto ya revisado.</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </div>
+      </a>
+
+      <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/bolsas">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-2xl shrink-0">📦</div>
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-slate-900">Bolsas para esterilizar</h2>
+            <p class="text-sm text-slate-600 mt-1">Cuánto hay contado sin embolsar y cuántas bolsas alcanzan.</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </div>
+      </a>
+
+      <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/conteos">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-2xl shrink-0">📊</div>
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-slate-900">Conteos del día</h2>
+            <p class="text-sm text-slate-600 mt-1">Lo contado de cada día de producción, por colaboradora y por producto.</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </div>
+      </a>
+    </section>
+  </template>
+
+  <!-- CONTEOS DEL DÍA -->
+  <template id="tplConteos">
+    <div class="fade-in space-y-4">
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
+        <div>
+          <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="cFecha">Día de producción</label>
+          <input id="cFecha" type="date" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+        </div>
+        <div role="group" aria-label="Agrupar" class="grid grid-cols-2 gap-2">
+          <button type="button" id="cVerPersona" class="rounded-xl py-3 text-sm font-semibold">Por colaboradora</button>
+          <button type="button" id="cVerProducto" class="rounded-xl py-3 text-sm font-semibold">Por producto</button>
+        </div>
+      </section>
+
+      <section id="cResumen" class="grid grid-cols-2 gap-2" hidden>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Canastos</div>
+          <div id="cCanastos" class="text-xl font-bold text-slate-900">0</div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Unidades</div>
+          <div id="cUnidades" class="text-xl font-bold text-slate-900">0</div>
+        </div>
+      </section>
+
+      <div id="cEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="cLista" class="space-y-3"></section>
+    </div>
+  </template>
+
+  <!-- BOLSAS PARA ESTERILIZAR -->
+  <template id="tplBolsas">
+    <div class="fade-in space-y-4">
+      <p class="text-sm text-slate-600">Lo contado que todavía no se embolsó, por producto. Cuando armes una bolsa, tocá «Cerrar bolsa».</p>
+
+      <div id="bAviso" role="status" class="flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800" hidden>
+        <span id="bAvisoTxt" class="flex-1 min-w-0"></span>
+        <button type="button" id="bAvisoDeshacer" class="shrink-0 underline font-semibold min-h-[44px] px-2" hidden>Deshacer</button>
+      </div>
+
+      <div id="bEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="bLista" class="space-y-3"></section>
+
+      <details id="bSinCapWrap" class="bg-white rounded-2xl border border-slate-200 p-4" hidden>
+        <summary class="text-sm font-semibold text-slate-700 cursor-pointer">Sin capacidad cargada (<span id="bSinCapN">0</span>)</summary>
+        <p class="text-xs text-slate-500 mt-2">La supervisora anota cuántas unidades entran por bolsa en la pestaña «Capacidad bolsas» del Google Sheet. Si el producto no se esteriliza, queda en esta lista.</p>
+        <ul id="bSinCap" class="mt-2 text-sm text-slate-700 space-y-1"></ul>
+      </details>
+
+      <section id="bUltimasWrap" hidden>
+        <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Últimas bolsas cerradas</h2>
+        <ul id="bUltimas" class="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100"></ul>
+      </section>
+    </div>
+  </template>
+
+  <!-- TARJETA DE LIQUIDACIÓN EN EL INICIO (supervisora / admin) -->
+  <template id="tplHomeLiquidacion">
+    <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/liquidacion">
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center text-2xl shrink-0">💰</div>
+        <div class="min-w-0">
+          <h2 class="text-lg font-semibold text-slate-900">Liquidación del mes</h2>
+          <p class="text-sm text-slate-600 mt-1">Cuánto le corresponde a cada colaboradora, con el detalle día por día.</p>
+        </div>
+        <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+      </div>
+    </a>
+  </template>
+
+  <!-- LIQUIDACIÓN DEL MES -->
+  <template id="tplLiquidacion">
+    <div class="fade-in space-y-4">
+      <p class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+        Vista de prueba: calcula igual que el Excel, pero el Excel sigue siendo el oficial hasta que hagamos un mes en paralelo.
+      </p>
+
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="lMes">Mes</label>
+            <select id="lMes" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="lBuscar">Buscar</label>
+            <input id="lBuscar" type="search" placeholder="apellido o nombre" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+        </div>
+      </section>
+
+      <section id="lTotales" class="grid grid-cols-2 sm:grid-cols-4 gap-2" hidden>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center col-span-2 sm:col-span-1">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Total a pagar</div>
+          <div id="lTotal" class="text-xl font-bold text-slate-900">—</div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Producción</div>
+          <div id="lProduccion" class="text-lg font-bold text-slate-900">—</div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Por hora y fijos</div>
+          <div id="lHoras" class="text-lg font-bold text-slate-900">—</div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center col-span-2 sm:col-span-1">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Con cargas</div>
+          <div id="lConCarga" class="text-lg font-bold text-slate-900">—</div>
+        </div>
+      </section>
+
+      <a href="#/liquidacion-resumen" class="card-tap flex items-center justify-between gap-3 rounded-2xl bg-white border border-slate-200 shadow-card p-4">
+        <span class="text-sm font-semibold text-slate-900">Resumen para Melina (imprimir o PDF)</span>
+        <svg class="w-5 h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+      </a>
+
+      <details id="lAvisos" class="rounded-2xl bg-amber-50 border border-amber-200 p-4" hidden>
+        <summary class="text-sm font-semibold text-amber-900 cursor-pointer">Para revisar (<span id="lAvisosN">0</span>)</summary>
+        <div id="lAvisosLista" class="mt-3 space-y-3 text-sm text-amber-900"></div>
+      </details>
+
+      <div id="lEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="lLista" class="space-y-2" aria-label="Colaboradoras"></section>
+    </div>
+  </template>
+
+  <!-- DETALLE DE LA LIQUIDACIÓN DE UNA COLABORADORA -->
+  <template id="tplLiqDetalle">
+    <div class="fade-in space-y-4">
+      <header>
+        <h1 id="ldNombre" class="text-xl font-bold text-slate-900"></h1>
+        <p id="ldMes" class="text-sm text-slate-500"></p>
+      </header>
+
+      <div id="ldEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="ldResumen" class="grid grid-cols-2 sm:grid-cols-3 gap-2" hidden></section>
+      <section id="ldDias" class="space-y-3"></section>
+    </div>
+  </template>
+
+  <!-- RESUMEN DEL MES PARA IMPRIMIR (lo que se le manda a Melina) -->
+  <template id="tplLiqResumen">
+    <div class="fade-in space-y-4">
+      <div class="no-print flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-slate-600 flex-1 min-w-[200px]">Para guardarlo en PDF, tocá «Imprimir» y elegí «Guardar como PDF».</p>
+        <button type="button" id="lrImprimir" class="rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm shrink-0">Imprimir</button>
+      </div>
+
+      <div id="lrEstado" class="no-print text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <div id="lrHoja" class="bg-white rounded-2xl border border-slate-200 p-4 overflow-x-auto" hidden>
+        <h1 class="text-lg font-bold text-slate-900">Resumen de liquidación · <span id="lrMes"></span></h1>
+        <p id="lrSub" class="text-xs text-slate-500 mt-1"></p>
+        <table class="mt-3 w-full text-xs border-collapse">
+          <thead>
+            <tr class="border-b-2 border-slate-300 text-left text-slate-600">
+              <th class="py-2 pr-2">#</th>
+              <th class="py-2 pr-2">Colaboradora</th>
+              <th class="py-2 pr-2">DNI</th>
+              <th class="py-2 pr-2 text-right">Días</th>
+              <th class="py-2 pr-2 text-right">Producción</th>
+              <th class="py-2 pr-2 text-right">Por hora</th>
+              <th class="py-2 pr-2 text-right">Fijo</th>
+              <th class="py-2 text-right">A pagar</th>
+            </tr>
+          </thead>
+          <tbody id="lrFilas"></tbody>
+          <tfoot>
+            <tr class="border-t-2 border-slate-300 font-bold text-slate-900">
+              <td class="py-2 pr-2" colspan="4">Total</td>
+              <td id="lrTotProd" class="py-2 pr-2 text-right"></td>
+              <td id="lrTotHoras" class="py-2 pr-2 text-right"></td>
+              <td id="lrTotFijo" class="py-2 pr-2 text-right"></td>
+              <td id="lrTotal" class="py-2 text-right"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </template>
+
+  <!-- ================== SCRIPT ================== -->
+  <script>
+    // =====================================================================
+    // CONFIG — URLs
+    // =====================================================================
+    const CONFIG = {
+      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyB6cDtNEv874POXSrFI0Mq8CdqToVrTk-qfyGbY-b9-gjYmqRnKWq_RpOB8VbtNo06/exec',  // implementación de prueba (versión 4)
+      GOOGLE_FORM_URL: 'https://forms.gle/cT4j7qkmeyXSjayu7',
+      CONTEO_FORM_URL: '',  // normalmente lo manda el backend (action=me)
+    };
+
+    // =====================================================================
+    // Estado + sesión
+    // =====================================================================
+    const SESSION_KEY = 'sanar.session.v2';
+
+    const state = {
+      session: loadSession(),
+      registros: [],
+      filtros: {
+        mes: localStorage.getItem('sanar.mes') || mesActualISO(),
+        buscar: '',
+        persona: localStorage.getItem('sanar.verPersona') || '',
+      },
+      conteos: { fecha: '', ver: 'persona', datos: [] },
+      liq: { mes: localStorage.getItem('sanar.liqMes') || mesActualISO(), buscar: '', datos: null, datosMes: '' },
+    };
+
+    function loadSession() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return null;
+        const s = JSON.parse(raw);
+        if (!s.token || !s.persona) return null;
+        return s;
+      } catch { return null; }
+    }
+    function saveSession(s) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+      state.session = s;
+    }
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+      state.session = null;
+    }
+
+    // =====================================================================
+    // Utils de fecha
+    // =====================================================================
+    function mesActualISO() {
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1);
+    }
+    function primerDiaDelMes(mesISO) {
+      const [y, m] = mesISO.split('-').map(Number);
+      return new Date(y, m - 1, 1);
+    }
+    function ultimoDiaDelMes(mesISO) {
+      const [y, m] = mesISO.split('-').map(Number);
+      return new Date(y, m, 0);
+    }
+    function formatFechaISO(d) {
+      const p = n => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+    function formatFechaLegible(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    // =====================================================================
+    // Router
+    // =====================================================================
+    function router() {
+      // Sin sesión → login (independiente del hash)
+      if (!state.session) {
+        mountLogin();
+        return;
+      }
+      const hash = location.hash || '#/';
+      if (hash.startsWith('#/consulta')) return mountConsulta();
+      if (hash.startsWith('#/cambiar-pin')) return mountCambiarPin();
+      if (hash.startsWith('#/resetear-pin')) return mountResetear();
+      if (hash.startsWith('#/conteos')) return mountConteos();
+      if (hash.startsWith('#/bolsas')) return mountBolsas();
+      if (hash.startsWith('#/liquidacion-resumen')) return mountLiqResumen();
+      if (hash.startsWith('#/liquidacion-detalle/')) return mountLiqDetalle(decodeURIComponent(hash.slice('#/liquidacion-detalle/'.length)));
+      if (hash.startsWith('#/liquidacion')) return mountLiquidacion();
+      return mountHome();
+    }
+    window.addEventListener('hashchange', router);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btnLogout').onclick = () => {
+        if (confirm('¿Cerrar sesión?')) {
+          clearSession();
+          location.hash = '#/';
+          router();
+        }
+      };
+      router();
+    });
+
+    // =====================================================================
+    // HEADER switching
+    // =====================================================================
+    function showHeader(show) {
+      document.getElementById('appHeader').hidden = !show;
+    }
+    function setHeader({ back, subtitle }) {
+      document.getElementById('btnBack').classList.toggle('hidden', !back);
+      if (back) document.getElementById('btnBack').onclick = () => (location.hash = '#/');
+      document.getElementById('headerPersona').textContent = state.session ? state.session.persona : '';
+      document.getElementById('headerSubtitle').textContent = subtitle || '';
+    }
+
+    // =====================================================================
+    // LOGIN
+    // =====================================================================
+    function mountLogin() {
+      showHeader(false);
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      const node = document.getElementById('tplLogin').content.cloneNode(true);
+      main.appendChild(node);
+
+      cargarOpcionesLogin();
+
+      document.getElementById('formLogin').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const persona = document.getElementById('loginPersona').value;
+        const pin = document.getElementById('loginPin').value.trim();
+        const btn = document.getElementById('btnLogin');
+        const errEl = document.getElementById('loginError');
+        errEl.hidden = true;
+
+        if (!persona) { errEl.textContent = 'Elegí tu nombre.'; errEl.hidden = false; return; }
+        if (!/^\d{4,8}$/.test(pin)) { errEl.textContent = 'El PIN debe tener entre 4 y 8 números.'; errEl.hidden = false; return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Entrando…';
+        try {
+          const data = await apiRaw({ action: 'login', persona, pin });
+          if (!data.ok) throw new Error(data.error || 'Error de login');
+          saveSession({
+            token: data.token,
+            persona: data.persona,
+            rol: data.rol,
+            permisos: data.permisos || [],
+            debeCambiarPin: data.debeCambiarPin,
+          });
+          location.hash = data.debeCambiarPin ? '#/cambiar-pin' : '#/';
+          router();
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.hidden = false;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Entrar';
+        }
+      });
+    }
+
+    async function cargarOpcionesLogin() {
+      const sel = document.getElementById('loginPersona');
+      try {
+        const data = await apiRaw({ action: 'login_options' });
+        if (!data.ok) throw new Error(data.error || 'no se cargó');
+        sel.innerHTML = '<option value="">Elegí tu nombre…</option>';
+        for (const p of data.personas) {
+          const opt = document.createElement('option');
+          opt.value = p.persona;
+          opt.textContent = p.persona;
+          sel.appendChild(opt);
+        }
+      } catch (err) {
+        sel.innerHTML = '<option value="">(error al cargar: ' + err.message + ')</option>';
+      }
+    }
+
+    // =====================================================================
+    // CAMBIAR PIN
+    // =====================================================================
+    function mountCambiarPin() {
+      showHeader(true);
+      setHeader({ back: !state.session.debeCambiarPin, subtitle: 'Cambiar PIN' });
+
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      const node = document.getElementById('tplCambiarPin').content.cloneNode(true);
+      main.appendChild(node);
+
+      document.getElementById('formCambio').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pinActual = document.getElementById('cpActual').value.trim();
+        const pinNuevo = document.getElementById('cpNuevo').value.trim();
+        const pinNuevo2 = document.getElementById('cpNuevo2').value.trim();
+        const errEl = document.getElementById('cpError');
+        errEl.hidden = true;
+
+        if (!/^\d{4}$/.test(pinNuevo)) { errEl.textContent = 'El PIN nuevo debe tener 4 dígitos.'; errEl.hidden = false; return; }
+        if (pinNuevo !== pinNuevo2) { errEl.textContent = 'Los dos PINs nuevos no coinciden.'; errEl.hidden = false; return; }
+
+        try {
+          const data = await api({ action: 'cambiar_pin', pinActual, pinNuevo });
+          if (!data.ok) throw new Error(data.error || 'Error');
+          // Marcar sesión como ya cambiada
+          state.session.debeCambiarPin = false;
+          saveSession(state.session);
+          alert('Listo. Tu PIN se cambió correctamente.');
+          location.hash = '#/';
+          router();
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.hidden = false;
+        }
+      });
+    }
+
+    // =====================================================================
+    // HOME
+    // =====================================================================
+    function mountHome() {
+      // Si debe cambiar PIN, lo mandamos a esa pantalla
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+
+      showHeader(true);
+      setHeader({ back: false, subtitle: 'Inicio' });
+
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      const node = document.getElementById('tplHome').content.cloneNode(true);
+
+      if (esGestion()) {
+        node.getElementById('linkResetear').hidden = false;
+        node.getElementById('consultaTitulo').textContent = 'Consultar registros de las colaboradoras';
+        node.getElementById('consultaDesc').textContent = 'Elegí una colaboradora y mirá lo mismo que ve ella en su pantalla.';
+      }
+
+      const linkCargar = node.getElementById('linkCargar');
+      if (CONFIG.GOOGLE_FORM_URL && !CONFIG.GOOGLE_FORM_URL.startsWith('PONER_')) {
+        linkCargar.href = CONFIG.GOOGLE_FORM_URL;
+      } else {
+        linkCargar.addEventListener('click', e => {
+          e.preventDefault();
+          alert('Falta configurar la URL del formulario en index.html.');
+        });
+      }
+
+      // Contadora: el bloque de conteo va primero. Supervisora/admin: después de la consulta.
+      if (puedeContar()) {
+        const bloque = document.getElementById('tplHomeConteo').content.cloneNode(true);
+        const linkConteo = bloque.getElementById('linkConteoForm');
+        const urlConteo = state.session.conteoFormUrl || CONFIG.CONTEO_FORM_URL;
+        if (urlConteo && !urlConteo.startsWith('PONER_')) linkConteo.href = urlConteo;
+        else linkConteo.hidden = true;
+        const grid = node.querySelector('.grid');
+        grid.insertBefore(bloque, esGestion() ? grid.children[2] : grid.firstElementChild);
+      }
+      // Supervisora/admin: la liquidación va justo después de la consulta de registros
+      if (esGestion()) {
+        const grid = node.querySelector('.grid');
+        grid.insertBefore(document.getElementById('tplHomeLiquidacion').content.cloneNode(true), grid.children[2]);
+      }
+
+      main.appendChild(node);
+      refrescarPermisos();
+    }
+
+    // =====================================================================
+    // RESETEAR PIN (supervisora / admin; el backend vuelve a validar el rol)
+    // =====================================================================
+    const ROLES_GESTION = ['supervisora', 'admin'];
+    function esGestion() {
+      return !!state.session && ROLES_GESTION.includes(state.session.rol);
+    }
+
+    function mountResetear() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Resetear PIN' });
+
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplResetear').content.cloneNode(true));
+
+      const sel = document.getElementById('rpPersona');
+      const conf = document.getElementById('rpConfirmar');
+      const btnSi = document.getElementById('rpSi');
+      const okEl = document.getElementById('rpOk');
+      const errEl = document.getElementById('rpError');
+      const limpiar = () => { conf.hidden = true; okEl.hidden = true; errEl.hidden = true; };
+
+      api({ action: 'listar_colaboradoras' }).then(data => {
+        sel.innerHTML = '<option value="">Elegí la colaboradora…</option>';
+        for (const p of data.colaboradoras) {
+          const opt = document.createElement('option');
+          opt.value = p.persona;
+          opt.textContent = p.persona;
+          sel.appendChild(opt);
+        }
+      }).catch(err => {
+        sel.innerHTML = '<option value="">(no se pudo cargar la lista)</option>';
+        errEl.textContent = err.message;
+        errEl.hidden = false;
+      });
+
+      sel.addEventListener('change', limpiar);
+      document.getElementById('rpBtn').addEventListener('click', () => {
+        limpiar();
+        if (!sel.value) { errEl.textContent = 'Elegí una colaboradora.'; errEl.hidden = false; return; }
+        document.getElementById('rpConfirmarTxt').textContent =
+          '¿Resetear el PIN de ' + sel.value + '? Va a entrar con los últimos 4 números de su DNI y la app le va a pedir elegir uno nuevo.';
+        conf.hidden = false;
+      });
+      document.getElementById('rpCancelar').addEventListener('click', limpiar);
+      btnSi.addEventListener('click', async () => {
+        btnSi.disabled = true;
+        try {
+          const data = await api({ action: 'resetear_pin', persona: sel.value });
+          conf.hidden = true;
+          okEl.textContent = 'Listo. ' + data.persona + ' ya puede entrar con los últimos 4 números de su DNI.';
+          okEl.hidden = false;
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.hidden = false;
+        } finally {
+          btnSi.disabled = false;
+        }
+      });
+    }
+
+    // =====================================================================
+    // CONSULTA
+    // =====================================================================
+    function mountConsulta() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: esGestion() ? 'Registros de las colaboradoras' : 'Mis registros' });
+
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      const node = document.getElementById('tplConsulta').content.cloneNode(true);
+      main.appendChild(node);
+
+      if (esGestion()) prepararSelectorPersona();
+
+      // Dropdown de meses
+      const selMes = document.getElementById('fMes');
+      const hoy = new Date();
+      selMes.innerHTML = '';
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+        const iso = formatFechaISO(d).slice(0, 7);
+        const opt = document.createElement('option');
+        opt.value = iso;
+        opt.textContent = d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+        selMes.appendChild(opt);
+      }
+      selMes.value = state.filtros.mes;
+      selMes.addEventListener('change', () => {
+        state.filtros.mes = selMes.value;
+        localStorage.setItem('sanar.mes', selMes.value);
+        cargarRegistros();
+      });
+
+      const inpBuscar = document.getElementById('fBuscar');
+      let deb;
+      inpBuscar.addEventListener('input', () => {
+        clearTimeout(deb);
+        deb = setTimeout(() => {
+          state.filtros.buscar = inpBuscar.value.trim().toLowerCase();
+          render();
+        }, 200);
+      });
+
+      if (!esGestion()) cargarRegistros();
+    }
+
+    async function prepararSelectorPersona() {
+      const sel = document.getElementById('fPersona');
+      document.getElementById('selPersonaWrap').hidden = false;
+      mostrarEstado('Cargando la lista de colaboradoras…', true);
+      try {
+        const data = await api({ action: 'listar_colaboradoras' });
+        sel.innerHTML = '<option value="">Elegí una colaboradora…</option>';
+        for (const p of data.colaboradoras) {
+          const opt = document.createElement('option');
+          opt.value = p.persona;
+          opt.textContent = p.persona;
+          sel.appendChild(opt);
+        }
+        if (!data.colaboradoras.some(p => p.persona === state.filtros.persona)) state.filtros.persona = '';
+        sel.value = state.filtros.persona;
+      } catch (err) {
+        sel.innerHTML = '<option value="">(no se pudo cargar la lista)</option>';
+        mostrarEstado('No se pudo cargar la lista de colaboradoras: ' + err.message);
+        return;
+      }
+      sel.addEventListener('change', () => {
+        state.filtros.persona = sel.value;
+        localStorage.setItem('sanar.verPersona', sel.value);
+        cargarRegistros();
+      });
+      cargarRegistros();
+    }
+
+    async function cargarRegistros() {
+      const { mes, persona } = state.filtros;
+      const desde = formatFechaISO(primerDiaDelMes(mes));
+      const hasta = formatFechaISO(ultimoDiaDelMes(mes));
+      const params = { action: 'registros', desde, hasta };
+      if (esGestion()) {
+        if (!persona) { mostrarEstado('Elegí una colaboradora para ver sus registros.'); return; }
+        params.persona = persona;
+      }
+      mostrarEstado('Cargando registros…', true);
+      try {
+        const data = await api(params);
+        state.registros = data.registros || [];
+        render();
+      } catch (err) {
+        mostrarEstado('No se pudieron cargar los registros: ' + err.message);
+      }
+    }
+
+    function mostrarEstado(msg, spinner = false) {
+      const est = document.getElementById('estado');
+      if (!est) return;
+      est.hidden = false;
+      document.getElementById('estadoTxt').textContent = msg;
+      est.querySelector('.animate-spin').style.display = spinner ? 'inline-block' : 'none';
+      document.getElementById('lista').innerHTML = '';
+      document.getElementById('vacio').hidden = true;
+      document.getElementById('resumenMes').hidden = true;
+    }
+
+    function ocultarEstado() { const e = document.getElementById('estado'); if (e) e.hidden = true; }
+
+    function render() {
+      ocultarEstado();
+      const lista = document.getElementById('lista');
+      const vacio = document.getElementById('vacio');
+      const resumen = document.getElementById('resumenMes');
+      lista.innerHTML = '';
+
+      const q = state.filtros.buscar;
+      const filtrados = state.registros.filter(r => {
+        if (!q) return true;
+        return (r.fecha || '').includes(q)
+          || (r.actividad || '').toLowerCase().includes(q)
+          || (r.productos || []).some(p => (p.nombre || '').toLowerCase().includes(q))
+          || (r.trabajos_por_hora || []).some(t => (t.tipo || '').toLowerCase().includes(q));
+      });
+
+      const totalHoras = filtrados.reduce((s, r) => s + (r.horas_billables || 0), 0);
+      const totalProds = filtrados.reduce((s, r) => s + (r.cantidad_productos || 0), 0);
+      document.getElementById('rDias').textContent = String(filtrados.length);
+      document.getElementById('rHoras').textContent = totalHoras.toFixed(1).replace('.', ',');
+      document.getElementById('rProds').textContent = totalProds.toLocaleString('es-AR');
+      resumen.hidden = false;
+
+      if (filtrados.length === 0) { vacio.hidden = false; return; }
+      vacio.hidden = true;
+
+      const tpl = document.getElementById('tplRegistro');
+      for (const r of filtrados) {
+        const node = tpl.content.cloneNode(true);
+        node.querySelector('[data-slot="dia"]').textContent = r.dia_semana || '';
+        node.querySelector('[data-slot="fecha"]').textContent = formatFechaLegible(r.fecha);
+
+        const horasCard = (r.horas_billables && r.horas_billables > 0) ? r.horas_billables : r.horas_trabajadas;
+        node.querySelector('[data-slot="horas"]').textContent =
+          horasCard != null && horasCard !== 0 ? String(horasCard).replace('.', ',') + ' hs' : '—';
+
+        const jornada = [];
+        if (r.ingreso) jornada.push('Ingreso ' + r.ingreso);
+        if (r.egreso) jornada.push('Egreso ' + r.egreso);
+        if (r.salida && r.regreso) jornada.push('salida ' + r.salida + ' → regreso ' + r.regreso);
+        node.querySelector('[data-slot="jornada"]').textContent = jornada.join(' · ');
+
+        node.querySelector('[data-slot="actividad"]').textContent = r.actividad || 'Sin actividad';
+
+        const trabWrap = node.querySelector('[data-slot="trabajosWrap"]');
+        const trabUl = node.querySelector('[data-slot="trabajos"]');
+        if (r.trabajos_por_hora && r.trabajos_por_hora.length) {
+          trabWrap.hidden = false;
+          for (const t of r.trabajos_por_hora) {
+            const li = document.createElement('li');
+            li.className = 'flex justify-between gap-2';
+            const s1 = document.createElement('span'); s1.className = 'truncate'; s1.textContent = t.tipo;
+            const s2 = document.createElement('span'); s2.className = 'font-semibold text-slate-900 shrink-0';
+            s2.textContent = String(t.horas).replace('.', ',') + ' hs';
+            li.appendChild(s1); li.appendChild(s2); trabUl.appendChild(li);
+          }
+        }
+
+        const prodsWrap = node.querySelector('[data-slot="productosWrap"]');
+        const prodsUl = node.querySelector('[data-slot="productos"]');
+        if (r.productos && r.productos.length) {
+          prodsWrap.hidden = false;
+          for (const p of r.productos) {
+            const li = document.createElement('li');
+            li.className = 'flex justify-between gap-2';
+            const s1 = document.createElement('span'); s1.className = 'truncate'; s1.textContent = p.nombre;
+            const s2 = document.createElement('span'); s2.className = 'font-semibold text-slate-900 shrink-0';
+            s2.textContent = p.cantidad.toLocaleString('es-AR');
+            li.appendChild(s1); li.appendChild(s2); prodsUl.appendChild(li);
+          }
+        }
+
+        lista.appendChild(node);
+      }
+    }
+
+    // =====================================================================
+    // CONTEO (contadora / supervisora / admin; el backend vuelve a validar)
+    // =====================================================================
+    function puedeContar() {
+      return esGestion() || (!!state.session && (state.session.permisos || []).includes('conteo'));
+    }
+
+    function nodo(tag, clase, texto) {
+      const n = document.createElement(tag);
+      if (clase) n.className = clase;
+      if (texto != null) n.textContent = texto;
+      return n;
+    }
+    const num = n => Number(n).toLocaleString('es-AR');
+    function formatFechaCorta(iso) {
+      const [, m, d] = iso.split('-').map(Number);
+      return d + '/' + m;
+    }
+    function estadoEn(id, msg, spinner = false) {
+      const est = document.getElementById(id);
+      if (!est) return;
+      est.hidden = false;
+      est.querySelector('[data-slot="txt"]').textContent = msg;
+      est.querySelector('.animate-spin').style.display = spinner ? 'inline-block' : 'none';
+    }
+
+    // Rol y permisos pueden cambiar después del login (ej. le dan el permiso de conteo): se piden de nuevo en el inicio.
+    async function refrescarPermisos() {
+      try {
+        const data = await api({ action: 'me' });
+        const foto = () => JSON.stringify([state.session.rol, state.session.permisos || [], state.session.conteoFormUrl || '']);
+        const antes = foto();
+        state.session.rol = data.rol;
+        state.session.permisos = data.permisos || [];
+        state.session.conteoFormUrl = data.conteoFormUrl || '';
+        saveSession(state.session);
+        const despues = foto();
+        if (antes !== despues && (location.hash || '#/') === '#/') mountHome();
+      } catch { /* sin conexión: queda lo que había */ }
+    }
+
+    // ---------- Conteos del día ----------
+    function mountConteos() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!puedeContar()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Conteos del día' });
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplConteos').content.cloneNode(true));
+
+      const hoy = formatFechaISO(new Date());
+      const inpFecha = document.getElementById('cFecha');
+      inpFecha.max = hoy;
+      inpFecha.value = state.conteos.fecha || hoy;
+      inpFecha.addEventListener('change', () => {
+        if (!inpFecha.value) return;
+        state.conteos.fecha = inpFecha.value;
+        cargarConteos();
+      });
+      document.getElementById('cVerPersona').onclick = () => { state.conteos.ver = 'persona'; renderConteos(); };
+      document.getElementById('cVerProducto').onclick = () => { state.conteos.ver = 'producto'; renderConteos(); };
+      cargarConteos();
+    }
+
+    async function cargarConteos() {
+      document.getElementById('cLista').innerHTML = '';
+      document.getElementById('cResumen').hidden = true;
+      estadoEn('cEstado', 'Cargando conteos…', true);
+      try {
+        const data = await api({ action: 'conteos', fecha: state.conteos.fecha || formatFechaISO(new Date()) });
+        state.conteos.datos = data.conteos || [];
+        renderConteos();
+      } catch (err) {
+        estadoEn('cEstado', 'No se pudieron cargar los conteos: ' + err.message);
+      }
+    }
+
+    function renderConteos() {
+      const lista = document.getElementById('cLista');
+      if (!lista) return;
+      document.getElementById('cEstado').hidden = true;
+      const porPersona = state.conteos.ver !== 'producto';
+      for (const [id, activo] of [['cVerPersona', porPersona], ['cVerProducto', !porPersona]]) {
+        const b = document.getElementById(id);
+        b.setAttribute('aria-pressed', String(activo));
+        b.className = 'rounded-xl py-3 text-sm font-semibold ' +
+          (activo ? 'bg-brand-700 text-white' : 'bg-white border border-slate-300 text-slate-700');
+      }
+
+      const datos = state.conteos.datos;
+      document.getElementById('cCanastos').textContent = num(new Set(datos.map(c => c.persona + '|' + c.fecha_conteo + '|' + c.hora)).size);
+      document.getElementById('cUnidades').textContent = num(datos.reduce((s, c) => s + c.cantidad, 0));
+      document.getElementById('cResumen').hidden = false;
+
+      lista.innerHTML = '';
+      if (!datos.length) {
+        lista.appendChild(nodo('p', 'text-center py-10 text-slate-500', 'No hay conteos cargados de la producción de ese día.'));
+        return;
+      }
+      const grupos = new Map();
+      for (const c of datos) {
+        const clave = porPersona ? c.persona : c.producto;
+        if (!grupos.has(clave)) grupos.set(clave, []);
+        grupos.get(clave).push(c);
+      }
+      for (const clave of [...grupos.keys()].sort((a, b) => a.localeCompare(b, 'es'))) {
+        const items = grupos.get(clave).slice()
+          .sort((a, b) => (a.fecha_conteo + a.hora).localeCompare(b.fecha_conteo + b.hora));
+        const card = nodo('article', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
+        const head = nodo('header', 'flex items-baseline justify-between gap-3');
+        head.appendChild(nodo('h2', 'font-semibold text-slate-900 min-w-0 break-words', clave));
+        head.appendChild(nodo('div', 'text-lg font-bold text-slate-900 shrink-0', num(items.reduce((s, c) => s + c.cantidad, 0))));
+        card.appendChild(head);
+        const ul = nodo('ul', 'mt-2 border-t border-slate-100 pt-2 text-sm text-slate-700 space-y-1');
+        for (const c of items) {
+          const li = nodo('li', 'flex justify-between gap-3');
+          // Hora del conteo; si se contó otro día (ej. a primera hora del día siguiente), también la fecha
+          const cuando = (c.fecha_conteo !== c.fecha ? formatFechaCorta(c.fecha_conteo) + ' ' : '') + c.hora;
+          li.appendChild(nodo('span', 'min-w-0 break-words', cuando + ' · ' + (porPersona ? c.producto : c.persona)));
+          li.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', num(c.cantidad)));
+          ul.appendChild(li);
+        }
+        card.appendChild(ul);
+        lista.appendChild(card);
+      }
+    }
+
+    // ---------- Bolsas para esterilizar ----------
+    function mountBolsas() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!puedeContar()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Bolsas para esterilizar' });
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplBolsas').content.cloneNode(true));
+      cargarBolsas();
+    }
+
+    async function cargarBolsas() {
+      estadoEn('bEstado', 'Cargando…', true);
+      try {
+        renderBolsas(await api({ action: 'bolsas' }));
+      } catch (err) {
+        estadoEn('bEstado', 'No se pudo cargar: ' + err.message);
+      }
+    }
+
+    function renderBolsas(data) {
+      const lista = document.getElementById('bLista');
+      if (!lista) return;
+      document.getElementById('bEstado').hidden = true;
+
+      // Primero los que ya llenan al menos una bolsa
+      const conCapacidad = data.productos.filter(p => p.capacidad)
+        .sort((a, b) => (b.completas > 0) - (a.completas > 0) || a.producto.localeCompare(b.producto, 'es'));
+      const sinCapacidad = data.productos.filter(p => !p.capacidad);
+      lista.innerHTML = '';
+      if (!conCapacidad.length) {
+        lista.appendChild(nodo('p', 'text-center py-8 text-slate-500', 'No hay nada contado para embolsar.'));
+      }
+      for (const p of conCapacidad) lista.appendChild(tarjetaBolsa(p));
+
+      document.getElementById('bSinCapWrap').hidden = !sinCapacidad.length;
+      document.getElementById('bSinCapN').textContent = sinCapacidad.length;
+      const ulSin = document.getElementById('bSinCap');
+      ulSin.innerHTML = '';
+      for (const p of sinCapacidad) {
+        const li = nodo('li', 'flex justify-between gap-3');
+        li.appendChild(nodo('span', 'min-w-0 break-words', p.producto));
+        li.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', num(p.pendiente)));
+        ulSin.appendChild(li);
+      }
+
+      document.getElementById('bUltimasWrap').hidden = !data.ultimas.length;
+      const ul = document.getElementById('bUltimas');
+      ul.innerHTML = '';
+      const hoy = formatFechaISO(new Date());
+      for (const b of data.ultimas) {
+        const li = nodo('li', 'flex items-center gap-3 p-3');
+        const txt = nodo('div', 'min-w-0 flex-1');
+        txt.appendChild(nodo('div', 'text-sm text-slate-900 break-words', b.producto));
+        const cuando = (b.fecha === hoy ? 'Hoy' : formatFechaCorta(b.fecha)) + ' ' + b.hora;
+        const incompleta = b.capacidad && b.cantidad < b.capacidad ? ' · incompleta' : '';
+        txt.appendChild(nodo('div', 'text-xs text-slate-500', cuando + ' · ' + num(b.cantidad) + ' unidades' + incompleta));
+        li.appendChild(txt);
+        const btn = nodo('button', 'shrink-0 text-sm text-slate-600 underline min-h-[44px] px-2', 'Deshacer');
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Deshacer la bolsa de ' + b.producto + ' de las ' + b.hora);
+        btn.onclick = () => deshacerBolsa(b);
+        li.appendChild(btn);
+        ul.appendChild(li);
+      }
+    }
+
+    function tarjetaBolsa(p) {
+      const card = nodo('article', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
+      card.appendChild(nodo('h2', 'font-semibold text-slate-900 break-words', p.producto));
+      const fila = nodo('div', 'mt-2 flex items-baseline gap-2');
+      fila.appendChild(nodo('span', 'text-3xl font-bold text-slate-900', num(p.pendiente)));
+      fila.appendChild(nodo('span', 'text-sm text-slate-600', 'sin embolsar'));
+      card.appendChild(fila);
+      card.appendChild(nodo('p', 'text-sm text-slate-600 mt-1', p.completas > 0
+        ? 'Alcanza para ' + p.completas + (p.completas === 1 ? ' bolsa' : ' bolsas') + ' de ' + num(p.capacidad) +
+          (p.resto ? ' y sobran ' + num(p.resto) : '') + '.'
+        : 'Faltan ' + num(p.capacidad - p.pendiente) + ' para llenar una bolsa de ' + num(p.capacidad) + '.'));
+
+      const llenado = Math.min(p.pendiente, p.capacidad);
+      const barra = nodo('div', 'mt-3 h-2 rounded-full bg-slate-100 overflow-hidden');
+      barra.setAttribute('role', 'progressbar');
+      barra.setAttribute('aria-label', 'Primera bolsa');
+      barra.setAttribute('aria-valuemin', '0');
+      barra.setAttribute('aria-valuemax', String(p.capacidad));
+      barra.setAttribute('aria-valuenow', String(llenado));
+      const relleno = nodo('div', 'h-full rounded-full ' + (llenado >= p.capacidad ? 'bg-brand-600' : 'bg-amber-400'));
+      relleno.style.width = Math.round((llenado / p.capacidad) * 100) + '%';
+      barra.appendChild(relleno);
+      card.appendChild(barra);
+
+      const abrir = nodo('button', 'mt-4 w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base', 'Cerrar bolsa');
+      abrir.type = 'button';
+      const form = nodo('form', 'mt-4 space-y-3');
+      form.hidden = true;
+      const idInput = 'cant-' + Math.random().toString(36).slice(2);
+      const label = nodo('label', 'text-xs font-medium text-slate-500 uppercase tracking-wide', '¿Cuántas van en esta bolsa?');
+      label.htmlFor = idInput;
+      const inp = nodo('input', 'mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-xl font-semibold text-center focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500');
+      Object.assign(inp, { id: idInput, type: 'number', inputMode: 'numeric', min: '1', step: '1', required: true });
+      inp.max = String(p.pendiente);
+      inp.value = String(llenado);
+      const campo = nodo('div');
+      campo.appendChild(label);
+      campo.appendChild(inp);
+      campo.appendChild(nodo('p', 'text-xs text-slate-500 mt-1', 'Bolsa llena: ' + num(p.capacidad) + '. Si la mandás incompleta, poné cuántas lleva.'));
+      const err = nodo('p', 'text-sm text-red-600');
+      err.hidden = true;
+      const botones = nodo('div', 'flex gap-2');
+      const cancelar = nodo('button', 'flex-1 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold py-3 text-sm', 'Cancelar');
+      cancelar.type = 'button';
+      const confirmar = nodo('button', 'flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-sm disabled:opacity-50', 'Confirmar');
+      confirmar.type = 'submit';
+      botones.appendChild(cancelar);
+      botones.appendChild(confirmar);
+      form.appendChild(campo);
+      form.appendChild(err);
+      form.appendChild(botones);
+      card.appendChild(abrir);
+      card.appendChild(form);
+
+      abrir.onclick = () => { abrir.hidden = true; form.hidden = false; inp.focus(); inp.select(); };
+      cancelar.onclick = () => { form.hidden = true; abrir.hidden = false; err.hidden = true; };
+      form.onsubmit = async e => {
+        e.preventDefault();
+        const cantidad = Number(inp.value);
+        err.hidden = true;
+        if (!Number.isInteger(cantidad) || cantidad < 1) { err.textContent = 'Poné cuántas unidades van en la bolsa.'; err.hidden = false; return; }
+        if (cantidad > p.pendiente) { err.textContent = 'Hay ' + num(p.pendiente) + ' sin embolsar.'; err.hidden = false; return; }
+        confirmar.disabled = true;
+        confirmar.textContent = 'Guardando…';
+        try {
+          const data = await api({ action: 'cerrar_bolsa', producto: p.producto, cantidad });
+          renderBolsas(data);
+          avisoBolsa('Bolsa cerrada: ' + num(cantidad) + ' de ' + p.producto + '.', data.cerrada);
+        } catch (e2) {
+          err.textContent = e2.message;
+          err.hidden = false;
+          confirmar.disabled = false;
+          confirmar.textContent = 'Confirmar';
+        }
+      };
+      return card;
+    }
+
+    function avisoBolsa(msg, bolsaParaDeshacer) {
+      const aviso = document.getElementById('bAviso');
+      if (!aviso) return;
+      document.getElementById('bAvisoTxt').textContent = msg;
+      const btn = document.getElementById('bAvisoDeshacer');
+      btn.hidden = !bolsaParaDeshacer;
+      btn.onclick = bolsaParaDeshacer ? () => deshacerBolsa(bolsaParaDeshacer) : null;
+      aviso.hidden = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function deshacerBolsa(b) {
+      if (!confirm('¿Deshacer la bolsa de ' + num(b.cantidad) + ' de ' + b.producto + '? Esas unidades vuelven a quedar sin embolsar.')) return;
+      try {
+        renderBolsas(await api({ action: 'anular_bolsa', id: b.id }));
+        avisoBolsa('Bolsa deshecha: las ' + num(b.cantidad) + ' unidades volvieron a quedar sin embolsar.', null);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // =====================================================================
+    // LIQUIDACIÓN (supervisora / admin; el backend vuelve a validar)
+    // =====================================================================
+    const pesos = n => '$ ' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+    // Precio por unidad con centavos (ej. $ 171,43), así la cuenta cantidad × precio cierra
+    const precioUnidad = n => '$ ' + (Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+    const horasTxt = n => (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('es-AR') + ' hs';
+    function horaDecimal(x) {
+      if (x == null) return '';
+      const h = Math.floor(x);
+      const m = Math.round((x - h) * 60);
+      return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    }
+    function nombreMes(mesISO) {
+      const [y, m] = mesISO.split('-').map(Number);
+      return new Date(y, m - 1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    }
+
+    function mountLiquidacion() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Liquidación del mes' });
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplLiquidacion').content.cloneNode(true));
+
+      const selMes = document.getElementById('lMes');
+      const hoy = new Date();
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+        const iso = formatFechaISO(d).slice(0, 7);
+        const opt = document.createElement('option');
+        opt.value = iso;
+        opt.textContent = nombreMes(iso);
+        selMes.appendChild(opt);
+      }
+      selMes.value = state.liq.mes;
+      if (selMes.value !== state.liq.mes) state.liq.mes = selMes.value;
+      selMes.addEventListener('change', () => {
+        state.liq.mes = selMes.value;
+        localStorage.setItem('sanar.liqMes', selMes.value);
+        cargarLiquidacion();
+      });
+      const buscar = document.getElementById('lBuscar');
+      buscar.value = state.liq.buscar;
+      buscar.addEventListener('input', () => { state.liq.buscar = buscar.value.trim().toLowerCase(); renderLiquidacion(); });
+
+      if (state.liq.datos && state.liq.datosMes === state.liq.mes) renderLiquidacion();
+      else cargarLiquidacion();
+    }
+
+    async function cargarLiquidacion() {
+      document.getElementById('lLista').innerHTML = '';
+      document.getElementById('lTotales').hidden = true;
+      document.getElementById('lAvisos').hidden = true;
+      estadoEn('lEstado', 'Calculando la liquidación…', true);
+      try {
+        const data = await api({ action: 'liquidacion', mes: state.liq.mes });
+        state.liq.datos = data.liquidacion;
+        state.liq.datosMes = state.liq.mes;
+        renderLiquidacion();
+      } catch (err) {
+        estadoEn('lEstado', err.message);
+      }
+    }
+
+    function renderLiquidacion() {
+      const lista = document.getElementById('lLista');
+      const L = state.liq.datos;
+      if (!lista || !L) return;
+      document.getElementById('lEstado').hidden = true;
+
+      const t = L.totales;
+      document.getElementById('lTotal').textContent = pesos(t.aPagar);
+      document.getElementById('lProduccion').textContent = pesos(t.montoProduccion);
+      document.getElementById('lHoras').textContent = pesos(t.montoTrabajoPorHora);
+      document.getElementById('lConCarga').textContent = L.filas.filter(f => f.registros > 0).length + ' de ' + L.filas.length;
+      document.getElementById('lTotales').hidden = false;
+      renderAvisosLiquidacion(L);
+
+      const q = state.liq.buscar;
+      lista.innerHTML = '';
+      const filas = L.filas.filter(f => !q || f.persona.toLowerCase().includes(q));
+      if (!filas.length) {
+        lista.appendChild(nodo('p', 'text-center py-10 text-slate-500', 'No hay colaboradoras que coincidan con la búsqueda.'));
+        return;
+      }
+      for (const f of filas) {
+        const a = nodo('a', 'card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-4' +
+          (f.aPagar ? '' : ' opacity-70'));
+        a.href = '#/liquidacion-detalle/' + encodeURIComponent(f.persona);
+        const fila1 = nodo('div', 'flex items-baseline justify-between gap-3');
+        fila1.appendChild(nodo('h2', 'font-semibold text-slate-900 min-w-0 break-words', f.persona));
+        fila1.appendChild(nodo('div', 'text-lg font-bold text-slate-900 shrink-0', pesos(f.aPagar)));
+        a.appendChild(fila1);
+        const partes = [];
+        if (f.montoProduccion) partes.push('Producción ' + pesos(f.montoProduccion));
+        if (f.montoHoras) partes.push('Por hora ' + pesos(f.montoHoras));
+        if (f.montoFijo) partes.push('Fijo ' + pesos(f.montoFijo));
+        partes.push(f.diasConCarga ? f.diasConCarga + (f.diasConCarga === 1 ? ' día' : ' días') : 'Sin cargas');
+        a.appendChild(nodo('p', 'text-xs text-slate-500 mt-1', partes.join(' · ')));
+        lista.appendChild(a);
+      }
+    }
+
+    function renderAvisosLiquidacion(L) {
+      const cont = document.getElementById('lAvisosLista');
+      cont.innerHTML = '';
+      let n = 0;
+      const bloque = (titulo, items) => {
+        if (!items.length) return;
+        n += items.length;
+        const div = nodo('div');
+        div.appendChild(nodo('p', 'font-semibold', titulo));
+        const ul = nodo('ul', 'mt-1 space-y-1');
+        for (const txt of items) ul.appendChild(nodo('li', 'break-words', txt));
+        div.appendChild(ul);
+        cont.appendChild(div);
+      };
+      const av = L.avisos;
+      bloque('Productos sin precio (no tienen grupo), hoy se pagan $ 0:',
+        av.productosSinPrecio.map(p => p.producto + ' · ' + num(p.cantidad) + ' u. (' + p.personas.join(', ') + ')'));
+      bloque('Productos que no están en la lista de precios:',
+        av.productosSinCatalogo.map(p => p.producto + ' · ' + num(p.cantidad) + ' u. (' + p.personas.join(', ') + ')'));
+      bloque('Cargaron en el formulario pero no están en la lista de colaboradoras:',
+        av.personasNoListadas.map(p => p.persona + ' · ' + p.registros + (p.registros === 1 ? ' carga' : ' cargas')));
+      if (L.diasLaborales == null) bloque('Falta cargar los días laborales del mes:', ['Sin ese dato no se calculan inasistencias ni horas faltantes.']);
+      document.getElementById('lAvisosN').textContent = n;
+      document.getElementById('lAvisos').hidden = n === 0;
+    }
+
+    function mountLiqResumen() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Resumen del mes' });
+      document.getElementById('btnBack').onclick = () => (location.hash = '#/liquidacion');
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplLiqResumen').content.cloneNode(true));
+      document.getElementById('lrImprimir').onclick = () => window.print();
+
+      if (state.liq.datos && state.liq.datosMes === state.liq.mes) return renderLiqResumen();
+      estadoEn('lrEstado', 'Calculando la liquidación…', true);
+      api({ action: 'liquidacion', mes: state.liq.mes }).then(data => {
+        state.liq.datos = data.liquidacion;
+        state.liq.datosMes = state.liq.mes;
+        document.getElementById('lrEstado').hidden = true;
+        renderLiqResumen();
+      }).catch(err => estadoEn('lrEstado', err.message));
+    }
+
+    function renderLiqResumen() {
+      const L = state.liq.datos;
+      const tbody = document.getElementById('lrFilas');
+      if (!tbody || !L) return;
+      const mesTxt = nombreMes(state.liq.mes);
+      document.getElementById('lrMes').textContent = mesTxt.charAt(0).toUpperCase() + mesTxt.slice(1);
+      document.getElementById('lrSub').textContent = 'Proyecto Sanar · generado el ' +
+        new Date().toLocaleDateString('es-AR') + (L.diasLaborales != null ? ' · ' + L.diasLaborales + ' días laborales' : '');
+      tbody.innerHTML = '';
+      L.filas.forEach((f, i) => {
+        const tr = nodo('tr', 'border-b border-slate-100');
+        const celda = (txt, clase) => tr.appendChild(nodo('td', 'py-1.5 pr-2 ' + (clase || ''), txt));
+        celda(String(i + 1), 'text-slate-500');
+        celda(f.persona, 'text-slate-900');
+        celda(f.dni || '—', 'text-slate-600');
+        celda(String(f.diasConCarga), 'text-right');
+        celda(f.montoProduccion ? pesos(f.montoProduccion) : '—', 'text-right');
+        celda(f.montoHoras ? pesos(f.montoHoras) : '—', 'text-right');
+        celda(f.montoFijo ? pesos(f.montoFijo) : '—', 'text-right');
+        tr.appendChild(nodo('td', 'py-1.5 text-right font-semibold text-slate-900', pesos(f.aPagar)));
+        tbody.appendChild(tr);
+      });
+      const suma = campo => L.filas.reduce((acc, f) => acc + (f[campo] || 0), 0);
+      document.getElementById('lrTotProd').textContent = pesos(suma('montoProduccion'));
+      document.getElementById('lrTotHoras').textContent = pesos(suma('montoHoras'));
+      document.getElementById('lrTotFijo').textContent = pesos(suma('montoFijo'));
+      document.getElementById('lrTotal').textContent = pesos(L.totales.aPagar);
+      document.getElementById('lrHoja').hidden = false;
+    }
+
+    function mountLiqDetalle(persona) {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Liquidación del mes' });
+      document.getElementById('btnBack').onclick = () => (location.hash = '#/liquidacion');
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplLiqDetalle').content.cloneNode(true));
+      document.getElementById('ldNombre').textContent = persona;
+      const mesTxt = nombreMes(state.liq.mes);
+      document.getElementById('ldMes').textContent = mesTxt.charAt(0).toUpperCase() + mesTxt.slice(1);
+      cargarLiqDetalle(persona);
+    }
+
+    async function cargarLiqDetalle(persona) {
+      estadoEn('ldEstado', 'Cargando…', true);
+      try {
+        const data = await api({ action: 'liquidacion_detalle', mes: state.liq.mes, persona });
+        document.getElementById('ldEstado').hidden = true;
+        renderLiqDetalle(data);
+      } catch (err) {
+        estadoEn('ldEstado', err.message);
+      }
+    }
+
+    function renderLiqDetalle(data) {
+      const res = document.getElementById('ldResumen');
+      const dias = document.getElementById('ldDias');
+      if (!res) return;
+      const f = data.fila;
+      res.innerHTML = '';
+      const dato = (titulo, valor, destacado) => {
+        const d = nodo('div', 'rounded-2xl bg-white border border-slate-200 p-3 text-center' + (destacado ? ' col-span-2 sm:col-span-1' : ''));
+        d.appendChild(nodo('div', 'text-xs uppercase tracking-wide text-slate-500', titulo));
+        d.appendChild(nodo('div', (destacado ? 'text-xl' : 'text-lg') + ' font-bold text-slate-900', valor));
+        res.appendChild(d);
+      };
+      if (f) {
+        dato('A pagar', pesos(f.aPagar), true);
+        dato('Producción', pesos(f.montoProduccion));
+        dato('Por hora', pesos(f.montoHoras));
+        if (f.montoFijo) dato('Monto fijo', pesos(f.montoFijo));
+        dato('Horas netas', horasTxt(f.hsNetas));
+        dato('Días con carga', String(f.diasConCarga));
+        if (f.inasistencias != null) dato('Inasistencias', String(f.inasistencias));
+        if (f.faltanteHsMinimas != null) dato('Faltan hs mín.', horasTxt(f.faltanteHsMinimas));
+        res.hidden = false;
+      }
+
+      dias.innerHTML = '';
+      if (!data.registros.length) {
+        dias.appendChild(nodo('p', 'text-center py-10 text-slate-500', 'No tiene cargas en este mes.'));
+        return;
+      }
+      for (const r of data.registros) {
+        const card = nodo('article', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
+        const head = nodo('header', 'flex items-baseline justify-between gap-3');
+        const tit = nodo('div', 'min-w-0');
+        tit.appendChild(nodo('div', 'text-xs uppercase tracking-wide text-brand-700 font-semibold', r.dia_semana));
+        tit.appendChild(nodo('div', 'font-bold text-slate-900', formatFechaLegible(r.fecha)));
+        head.appendChild(tit);
+        head.appendChild(nodo('div', 'text-lg font-bold text-slate-900 shrink-0', pesos(r.total)));
+        card.appendChild(head);
+        if (r.ingreso != null || r.egreso != null) {
+          card.appendChild(nodo('p', 'text-sm text-slate-600 mt-1',
+            horaDecimal(r.ingreso) + ' → ' + horaDecimal(r.egreso) + ' · ' + horasTxt(r.hsNetas) + ' netas'));
+        }
+        const ul = nodo('ul', 'mt-2 border-t border-slate-100 pt-2 text-sm text-slate-700 space-y-1');
+        for (const it of r.items) {
+          const li = nodo('li', 'flex justify-between gap-3');
+          const izq = nodo('span', 'min-w-0 break-words');
+          izq.appendChild(document.createTextNode(it.producto + ' · ' + num(it.cantidad) + ' × '));
+          izq.appendChild(it.precio
+            ? document.createTextNode(precioUnidad(it.precio))
+            : nodo('span', 'font-semibold text-amber-700', 'sin precio'));
+          li.appendChild(izq);
+          li.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', pesos(it.monto)));
+          ul.appendChild(li);
+        }
+        for (const tr of r.trabajos) {
+          const li = nodo('li', 'flex justify-between gap-3');
+          li.appendChild(nodo('span', 'min-w-0 break-words', (tr.tipo || 'Trabajo por hora') + ' · ' + horasTxt(tr.horas)));
+          li.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', pesos(tr.monto)));
+          ul.appendChild(li);
+        }
+        if (ul.children.length) card.appendChild(ul);
+        dias.appendChild(card);
+      }
+    }
+
+    // =====================================================================
+    // API
+    // =====================================================================
+    async function apiRaw(params) {
+      if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.startsWith('PONER_')) {
+        throw new Error('Falta configurar APPS_SCRIPT_URL en index.html.');
+      }
+      const url = new URL(CONFIG.APPS_SCRIPT_URL);
+      for (const [k, v] of Object.entries(params)) if (v != null) url.searchParams.set(k, v);
+      const res = await fetch(url.toString(), { method: 'GET' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }
+
+    async function api(params) {
+      if (!state.session) throw new Error('Sin sesión');
+      const withToken = Object.assign({ token: state.session.token }, params);
+      const data = await apiRaw(withToken);
+      if (!data.ok && data.code === 'AUTH_REQUIRED') {
+        clearSession();
+        location.hash = '#/';
+        router();
+        throw new Error('Tu sesión expiró. Volvé a entrar.');
+      }
+      if (!data.ok) throw new Error(data.error || 'Error del servidor');
+      return data;
+    }
+  </script>
+</body>
+</html>
