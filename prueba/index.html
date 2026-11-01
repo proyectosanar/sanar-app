@@ -46,6 +46,11 @@
     .fade-in { animation: fadeIn .18s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
     [hidden] { display: none !important; }
+    /* Desplegables (conteos y precios): sin el triángulo del navegador, con flecha propia */
+    details.desplegable > summary { list-style: none; }
+    details.desplegable > summary::-webkit-details-marker { display: none; }
+    details.desplegable > summary .flecha { transition: transform .15s; }
+    details.desplegable[open] > summary .flecha { transform: rotate(90deg); }
     /* Resumen para Melina: al imprimir (o guardar como PDF) sale solo la tabla */
     @media print {
       @page { size: A4 landscape; margin: 12mm; }
@@ -417,6 +422,7 @@
           <button type="button" id="cVerPersona" class="rounded-xl py-3 text-sm font-semibold">Por colaboradora</button>
           <button type="button" id="cVerProducto" class="rounded-xl py-3 text-sm font-semibold">Por producto</button>
         </div>
+        <p class="text-xs text-slate-500">Tocá un renglón para ver cada conteo con su hora.</p>
       </section>
 
       <section id="cResumen" class="grid grid-cols-2 gap-2" hidden>
@@ -527,6 +533,14 @@
         <svg class="w-5 h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
       </a>
 
+      <a href="#/liquidacion-parametros" class="card-tap flex items-center justify-between gap-3 rounded-2xl bg-white border border-slate-200 shadow-card p-4">
+        <span class="min-w-0">
+          <span class="block text-sm font-semibold text-slate-900">Precios y parámetros</span>
+          <span class="block text-xs text-slate-500 mt-0.5">Valor hora, grupos, productos, montos fijos, días laborales y colaboradoras</span>
+        </span>
+        <svg class="w-5 h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+      </a>
+
       <details id="lAvisos" class="rounded-2xl bg-amber-50 border border-amber-200 p-4" hidden>
         <summary class="text-sm font-semibold text-amber-900 cursor-pointer">Para revisar (<span id="lAvisosN">0</span>)</summary>
         <div id="lAvisosLista" class="mt-3 space-y-3 text-sm text-amber-900"></div>
@@ -556,6 +570,24 @@
 
       <section id="ldResumen" class="grid grid-cols-2 sm:grid-cols-3 gap-2" hidden></section>
       <section id="ldDias" class="space-y-3"></section>
+    </div>
+  </template>
+
+  <!-- PRECIOS Y PARÁMETROS DE LA LIQUIDACIÓN (lo que antes se cambiaba en el Excel) -->
+  <template id="tplLiqParametros">
+    <div class="fade-in space-y-3">
+      <p class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+        Lo que cambies acá vale para la liquidación de cualquier mes, también los anteriores. Cuando esté «Cerrar mes», los meses cerrados ya no van a cambiar.
+      </p>
+
+      <div id="lpAviso" role="status" class="fixed bottom-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl bg-emerald-700 text-white p-3 text-sm font-semibold shadow-lg" hidden></div>
+
+      <div id="lpEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <div id="lpSecciones" class="space-y-3"></div>
     </div>
   </template>
 
@@ -629,6 +661,8 @@
       },
       conteos: { fecha: '', ver: 'persona', datos: [] },
       liq: { mes: localStorage.getItem('sanar.liqMes') || mesActualISO(), buscar: '', datos: null, datosMes: '' },
+      // Precios y parámetros: qué secciones están abiertas, qué fila se está editando y los filtros
+      liqp: { datos: null, abiertas: new Set(['valores']), editando: '', prefijo: {}, buscarProd: '', soloSinGrupo: false, buscarCol: '', mesFijos: '' },
     };
 
     function loadSession() {
@@ -690,6 +724,7 @@
       if (hash.startsWith('#/conteos')) return mountConteos();
       if (hash.startsWith('#/bolsas')) return mountBolsas();
       if (hash.startsWith('#/liquidacion-resumen')) return mountLiqResumen();
+      if (hash.startsWith('#/liquidacion-parametros')) return mountLiqParametros();
       if (hash.startsWith('#/liquidacion-detalle/')) return mountLiqDetalle(decodeURIComponent(hash.slice('#/liquidacion-detalle/'.length)));
       if (hash.startsWith('#/liquidacion')) return mountLiquidacion();
       return mountHome();
@@ -1229,24 +1264,45 @@
         if (!grupos.has(clave)) grupos.set(clave, []);
         grupos.get(clave).push(c);
       }
+      const total = cs => cs.reduce((s, c) => s + c.cantidad, 0);
       for (const clave of [...grupos.keys()].sort((a, b) => a.localeCompare(b, 'es'))) {
-        const items = grupos.get(clave).slice()
-          .sort((a, b) => (a.fecha_conteo + a.hora).localeCompare(b.fecha_conteo + b.hora));
+        const items = grupos.get(clave);
         const card = nodo('article', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
         const head = nodo('header', 'flex items-baseline justify-between gap-3');
         head.appendChild(nodo('h2', 'font-semibold text-slate-900 min-w-0 break-words', clave));
-        head.appendChild(nodo('div', 'text-lg font-bold text-slate-900 shrink-0', num(items.reduce((s, c) => s + c.cantidad, 0))));
+        head.appendChild(nodo('div', 'text-lg font-bold text-slate-900 shrink-0', num(total(items))));
         card.appendChild(head);
-        const ul = nodo('ul', 'mt-2 border-t border-slate-100 pt-2 text-sm text-slate-700 space-y-1');
+
+        // Adentro, el subtotal por la otra mirada (productos de la colaboradora, o colaboradoras del producto);
+        // tocando cada uno se ven los conteos de cada hora
+        const subgrupos = new Map();
         for (const c of items) {
-          const li = nodo('li', 'flex justify-between gap-3');
-          // Hora del conteo; si se contó otro día (ej. a primera hora del día siguiente), también la fecha
-          const cuando = (c.fecha_conteo !== c.fecha ? formatFechaCorta(c.fecha_conteo) + ' ' : '') + c.hora;
-          li.appendChild(nodo('span', 'min-w-0 break-words', cuando + ' · ' + (porPersona ? c.producto : c.persona)));
-          li.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', num(c.cantidad)));
-          ul.appendChild(li);
+          const sub = porPersona ? c.producto : c.persona;
+          if (!subgrupos.has(sub)) subgrupos.set(sub, []);
+          subgrupos.get(sub).push(c);
         }
-        card.appendChild(ul);
+        const cuerpo = nodo('div', 'mt-2 border-t border-slate-100 pt-1 text-sm text-slate-700');
+        for (const sub of [...subgrupos.keys()].sort((a, b) => a.localeCompare(b, 'es'))) {
+          const cs = subgrupos.get(sub).slice().sort((a, b) => (a.fecha_conteo + a.hora).localeCompare(b.fecha_conteo + b.hora));
+          const det = nodo('details', 'desplegable');
+          const sum = nodo('summary', 'flex items-center gap-2 py-1.5 cursor-pointer');
+          sum.appendChild(nodo('span', 'flecha inline-block text-slate-400 leading-none', '›'));
+          sum.appendChild(nodo('span', 'flex-1 min-w-0 break-words', sub));
+          sum.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', num(total(cs))));
+          det.appendChild(sum);
+          const ul = nodo('ul', 'pl-5 pb-1 text-xs text-slate-500 space-y-0.5');
+          for (const c of cs) {
+            const li = nodo('li', 'flex justify-between gap-3');
+            // Hora del conteo; si se contó otro día (ej. a primera hora del día siguiente), también la fecha
+            const cuando = (c.fecha_conteo !== c.fecha ? 'el ' + formatFechaCorta(c.fecha_conteo) + ' ' : '') + 'a las ' + c.hora;
+            li.appendChild(nodo('span', '', 'Contado ' + cuando));
+            li.appendChild(nodo('span', 'shrink-0', num(c.cantidad)));
+            ul.appendChild(li);
+          }
+          det.appendChild(ul);
+          cuerpo.appendChild(det);
+        }
+        card.appendChild(cuerpo);
         lista.appendChild(card);
       }
     }
@@ -1548,6 +1604,11 @@
       bloque('Cargaron en el formulario pero no están en la lista de colaboradoras:',
         av.personasNoListadas.map(p => p.persona + ' · ' + p.registros + (p.registros === 1 ? ' carga' : ' cargas')));
       if (L.diasLaborales == null) bloque('Falta cargar los días laborales del mes:', ['Sin ese dato no se calculan inasistencias ni horas faltantes.']);
+      if (n) {
+        const a = nodo('a', 'inline-block font-semibold underline min-h-[44px] py-2', 'Corregirlo en «Precios y parámetros» →');
+        a.href = '#/liquidacion-parametros';
+        cont.appendChild(a);
+      }
       document.getElementById('lAvisosN').textContent = n;
       document.getElementById('lAvisos').hidden = n === 0;
     }
@@ -1694,6 +1755,483 @@
         if (ul.children.length) card.appendChild(ul);
         dias.appendChild(card);
       }
+    }
+
+    // ---------- Precios y parámetros (lo que antes se cambiaba en el Excel) ----------
+    const LP_INPUT = 'mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500';
+    function mesTitulo(mesISO) {
+      if (!/^\d{4}-\d{2}$/.test(mesISO || '')) return mesISO || '(sin mes)';
+      const t = nombreMes(mesISO);
+      return t.charAt(0).toUpperCase() + t.slice(1);
+    }
+    const mesAnterior = mesISO => {
+      const [y, m] = mesISO.split('-').map(Number);
+      return formatFechaISO(new Date(y, m - 2, 1)).slice(0, 7);
+    };
+    const porNombre = (a, b) => a.localeCompare(b, 'es');
+
+    function mountLiqParametros() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Precios y parámetros' });
+      document.getElementById('btnBack').onclick = () => (location.hash = '#/liquidacion');
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplLiqParametros').content.cloneNode(true));
+      state.liqp.editando = '';
+      state.liqp.prefijo = {};
+      if (!state.liqp.mesFijos) state.liqp.mesFijos = state.liq.mes;
+      cargarLiqParametros();
+    }
+
+    async function cargarLiqParametros() {
+      estadoEn('lpEstado', 'Cargando…', true);
+      try {
+        state.liqp.datos = await api({ action: 'liq_tablas' });
+        document.getElementById('lpEstado').hidden = true;
+        renderLiqParametros();
+      } catch (err) {
+        estadoEn('lpEstado', 'No se pudo cargar: ' + err.message);
+      }
+    }
+
+    // Guarda un cambio: el backend devuelve las tablas ya actualizadas y se redibuja todo
+    async function cambioLiq(params) {
+      const data = await api(params);
+      state.liqp.datos = data;
+      state.liqp.editando = '';
+      state.liqp.prefijo = {};
+      state.liq.datos = null;  // la liquidación se vuelve a calcular con los valores nuevos
+      renderLiqParametros();
+      const aviso = document.getElementById('lpAviso');
+      if (!aviso) return;
+      aviso.textContent = data.aviso || 'Guardado.';
+      aviso.hidden = false;
+      clearTimeout(cambioLiq.timer);
+      cambioLiq.timer = setTimeout(() => (aviso.hidden = true), 4000);
+    }
+    const lpGuardar = (tabla, fila) => vals => cambioLiq({
+      action: 'liq_guardar', tabla, fila: fila ? fila.fila : '', datos: JSON.stringify(vals), antes: fila ? JSON.stringify(fila) : '',
+    });
+    const lpBorrar = (tabla, fila, pregunta) => async () => {
+      if (!confirm(pregunta)) return;
+      await cambioLiq({ action: 'liq_borrar', tabla, fila: fila.fila, antes: JSON.stringify(fila) });
+    };
+    function lpEditar(clave, prefijo) {
+      state.liqp.editando = clave;
+      state.liqp.prefijo = prefijo || {};
+      renderLiqParametros();
+    }
+
+    function renderLiqParametros() {
+      const cont = document.getElementById('lpSecciones');
+      const D = state.liqp.datos;
+      if (!cont || !D) return;
+      const T = D.tablas;
+      const sinGrupo = T.productos.filter(p => !p.grupo).length;
+      const mesF = state.liqp.mesFijos || state.liq.mes;
+      const faltanDias = !T.diasLaborales.some(d => d.mes === state.liq.mes);
+      const secciones = [
+        ['valores', 'Valor de la hora', pesos(D.valorHora) + ' · ' + pesos(D.valorHoraTrabajo), lpValores],
+        ['grupos', 'Grupos y unidades por hora', String(T.grupos.length), lpGrupos],
+        ['productos', 'Productos', T.productos.length + (sinGrupo ? ' · ' + sinGrupo + ' sin grupo' : ''), lpProductos],
+        ['montosFijos', 'Montos fijos', mesTitulo(mesF) + ': ' + T.montosFijos.filter(m => m.mes === mesF).length, lpMontosFijos],
+        ['diasLaborales', 'Días laborales', faltanDias ? 'falta ' + nombreMes(state.liq.mes) : T.diasLaborales.length + ' meses', lpDiasLaborales],
+        ['colaboradoras', 'Colaboradoras', String(T.colaboradoras.length), lpColaboradoras],
+        ['historial', 'Últimos cambios', '', lpHistorial],
+      ];
+      cont.innerHTML = '';
+      for (const [id, titulo, resumen, pintar] of secciones) {
+        const det = nodo('details', 'desplegable bg-white rounded-2xl border border-slate-200 shadow-card');
+        det.open = state.liqp.abiertas.has(id);
+        det.addEventListener('toggle', () => (det.open ? state.liqp.abiertas.add(id) : state.liqp.abiertas.delete(id)));
+        const sum = nodo('summary', 'flex items-center gap-3 p-4 cursor-pointer');
+        sum.appendChild(nodo('span', 'flecha inline-block text-xl leading-none text-slate-400', '›'));
+        sum.appendChild(nodo('span', 'flex-1 min-w-0 font-semibold text-slate-900', titulo));
+        if (resumen) sum.appendChild(nodo('span', 'text-xs text-right shrink-0 ' + (/sin grupo|falta/.test(resumen) ? 'font-semibold text-amber-700' : 'text-slate-500'), resumen));
+        det.appendChild(sum);
+        const body = nodo('div', 'px-4 pb-4');
+        pintar(body, D);
+        det.appendChild(body);
+        cont.appendChild(det);
+      }
+    }
+
+    // Una fila: el dato y «Cambiar»; si es la que se está editando, el formulario en su lugar
+    function lpFila(cont, clave, pintar, editor) {
+      if (state.liqp.editando === clave) { cont.appendChild(editor()); return; }
+      const fila = nodo('div', 'flex items-center justify-between gap-3 py-2 border-t border-slate-100');
+      const izq = nodo('div', 'min-w-0 text-sm');
+      pintar(izq);
+      fila.appendChild(izq);
+      const btn = nodo('button', 'shrink-0 text-sm font-semibold text-brand-700 underline min-h-[44px] px-2', 'Cambiar');
+      btn.type = 'button';
+      btn.onclick = () => lpEditar(clave);
+      fila.appendChild(btn);
+      cont.appendChild(fila);
+    }
+
+    function lpAgregar(cont, clave, texto, editor) {
+      if (state.liqp.editando === clave) { cont.appendChild(editor()); return; }
+      const btn = nodo('button', 'my-2 w-full rounded-xl border border-dashed border-brand-500 text-brand-700 font-semibold py-3 text-sm', '+ ' + texto);
+      btn.type = 'button';
+      btn.onclick = () => lpEditar(clave);
+      cont.appendChild(btn);
+    }
+
+    // Cartel con lo que falta cargar y un «Agregar» para cada uno
+    function lpFaltantes(cont, titulo, nombres, clave, campo) {
+      if (!nombres.length) return;
+      const caja = nodo('div', 'my-2 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900');
+      caja.appendChild(nodo('p', 'font-semibold', titulo + ' (' + nombres.length + '):'));
+      for (const n of nombres) {
+        const fila = nodo('div', 'flex items-center justify-between gap-3');
+        fila.appendChild(nodo('span', 'min-w-0 break-words', n));
+        const b = nodo('button', 'shrink-0 font-semibold underline min-h-[44px] px-2', 'Agregar');
+        b.type = 'button';
+        b.onclick = () => lpEditar(clave, { [campo]: n });
+        fila.appendChild(b);
+        caja.appendChild(fila);
+      }
+      cont.appendChild(caja);
+    }
+
+    /**
+     * Formulario de una fila.
+     * campos: [{ k, label, tipo: 'texto' | 'numero' | 'mes' | 'select', opciones: [[valor, texto]], lista: [sugerencias], ayuda }]
+     * guardar(valores) y borrar() devuelven promesas; si fallan, el error se muestra en el formulario.
+     */
+    function lpEditor(titulo, campos, valores, guardar, borrar) {
+      const form = nodo('form', 'my-2 rounded-xl border border-brand-200 bg-brand-50 p-3 space-y-3');
+      if (titulo) form.appendChild(nodo('p', 'text-sm font-semibold text-slate-900 break-words', titulo));
+      const inputs = {};
+      for (const c of campos) {
+        const lab = nodo('label', 'block');
+        lab.appendChild(nodo('span', 'text-xs font-medium text-slate-500 uppercase tracking-wide', c.label));
+        let inp;
+        if (c.tipo === 'select') {
+          inp = nodo('select', LP_INPUT);
+          for (const [v, txt] of c.opciones) {
+            const o = nodo('option', null, txt);
+            o.value = v;
+            inp.appendChild(o);
+          }
+        } else {
+          inp = nodo('input', LP_INPUT);
+          inp.type = c.tipo === 'mes' ? 'month' : 'text';
+          if (c.tipo === 'numero') inp.inputMode = 'decimal';
+          if (c.lista && c.lista.length) {
+            const dl = nodo('datalist');
+            dl.id = 'lpLista' + Math.random().toString(36).slice(2);
+            for (const v of c.lista) {
+              const o = nodo('option');
+              o.value = v;
+              dl.appendChild(o);
+            }
+            lab.appendChild(dl);
+            inp.setAttribute('list', dl.id);
+          }
+        }
+        inp.value = valores[c.k] == null ? '' : valores[c.k];
+        inputs[c.k] = inp;
+        lab.appendChild(inp);
+        if (c.ayuda) lab.appendChild(nodo('span', 'block text-xs text-slate-500 mt-1', c.ayuda));
+        form.appendChild(lab);
+      }
+      const error = nodo('p', 'text-sm font-semibold text-red-700');
+      error.hidden = true;
+      form.appendChild(error);
+
+      const conEspera = async (fn, boton, txt) => {
+        error.hidden = true;
+        const original = boton.textContent;
+        boton.disabled = true;
+        boton.textContent = txt;
+        try {
+          await fn();
+        } catch (err) {
+          error.textContent = err.message;
+          error.hidden = false;
+        } finally {
+          // Si se guardó, el formulario ya no está (se redibujó); si no, vuelve a quedar usable
+          if (form.isConnected) { boton.disabled = false; boton.textContent = original; }
+        }
+      };
+      const botones = nodo('div', 'flex flex-wrap items-center gap-2');
+      const bGuardar = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60', 'Guardar');
+      bGuardar.type = 'submit';
+      const bCancelar = nodo('button', 'rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold px-5 py-3 text-sm', 'Cancelar');
+      bCancelar.type = 'button';
+      bCancelar.onclick = () => lpEditar('');
+      botones.append(bGuardar, bCancelar);
+      if (borrar) {
+        const bBorrar = nodo('button', 'ml-auto text-sm font-semibold text-red-700 underline min-h-[44px] px-2 disabled:opacity-60', 'Borrar');
+        bBorrar.type = 'button';
+        bBorrar.onclick = () => conEspera(borrar, bBorrar, 'Borrando…');
+        botones.appendChild(bBorrar);
+      }
+      form.appendChild(botones);
+      form.onsubmit = ev => {
+        ev.preventDefault();
+        const vals = {};
+        for (const k of Object.keys(inputs)) vals[k] = inputs[k].value.trim();
+        conEspera(() => guardar(vals), bGuardar, 'Guardando…');
+      };
+      setTimeout(() => form.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 0);
+      return form;
+    }
+
+    function lpValores(body, D) {
+      const textos = {
+        valor_hora_produccion: ['Hora de producción', 'Base del precio por unidad: este valor ÷ las unidades por hora del grupo. Si lo cambiás, cambian todos los precios.'],
+        valor_hora_trabajo: ['Hora de trabajo', 'Lo que se paga por cada hora de corte, control, ADM/calidad, etc.'],
+      };
+      for (const p of D.tablas.parametros) {
+        const [titulo, ayuda] = textos[p.clave] || [p.descripcion || p.clave, ''];
+        lpFila(body, 'parametros:' + p.fila, izq => {
+          izq.appendChild(nodo('div', 'font-semibold text-slate-900', titulo + ': ' + pesos(p.valor)));
+          if (ayuda) izq.appendChild(nodo('div', 'text-xs text-slate-500 mt-0.5', ayuda));
+        }, () => lpEditor(titulo, [{ k: 'valor', label: 'Valor en pesos', tipo: 'numero', ayuda }], p, lpGuardar('parametros', p)));
+      }
+    }
+
+    function camposGrupo(D) {
+      return [
+        { k: 'grupo', label: 'Nombre del grupo' },
+        { k: 'categoria', label: 'Categoría', lista: [...new Set(D.tablas.grupos.map(g => g.categoria).filter(Boolean))] },
+        { k: 'unidades_por_hora', label: 'Unidades por hora', tipo: 'numero', ayuda: 'El precio por unidad es ' + pesos(D.valorHora) + ' ÷ este número.' },
+        { k: 'observaciones', label: 'Observaciones' },
+      ];
+    }
+
+    function lpGrupos(body, D) {
+      body.appendChild(nodo('p', 'text-xs text-slate-500 pb-1', 'Cuántas unidades se hacen en una hora. De ahí sale el precio por unidad de todos los productos del grupo.'));
+      lpAgregar(body, 'grupos:nuevo', 'Agregar grupo', () => lpEditor('Grupo nuevo', camposGrupo(D), {}, lpGuardar('grupos', null)));
+      const porCategoria = new Map();
+      for (const g of D.tablas.grupos) {
+        const c = g.categoria || 'SIN CATEGORÍA';
+        if (!porCategoria.has(c)) porCategoria.set(c, []);
+        porCategoria.get(c).push(g);
+      }
+      for (const [cat, grupos] of porCategoria) {
+        body.appendChild(nodo('h3', 'pt-3 pb-1 text-xs font-semibold text-brand-700 uppercase tracking-wide', cat));
+        for (const g of grupos) {
+          lpFila(body, 'grupos:' + g.fila, izq => {
+            izq.appendChild(nodo('div', 'font-medium text-slate-900 break-words', g.grupo));
+            izq.appendChild(nodo('div', 'text-xs text-slate-500', num(g.unidades_por_hora) + ' por hora → ' + precioUnidad(g.precio) + ' c/u · ' +
+              g.productos + (g.productos === 1 ? ' producto' : ' productos') + (g.observaciones ? ' · ' + g.observaciones : '')));
+            if (g.repetido) izq.appendChild(nodo('div', 'text-xs font-semibold text-amber-700', 'Nombre repetido: para los precios se usa el de más arriba.'));
+          }, () => lpEditor(g.grupo, camposGrupo(D), g, lpGuardar('grupos', g),
+            lpBorrar('grupos', g, '¿Borrar el grupo «' + g.grupo + '»?')));
+        }
+      }
+    }
+
+    function camposProducto(D) {
+      const opciones = [['', 'Sin grupo (se paga $ 0)']];
+      for (const g of D.tablas.grupos) if (!g.repetido) opciones.push([g.grupo, g.grupo + ' · ' + precioUnidad(g.precio)]);
+      return [
+        { k: 'producto', label: 'Producto (tal cual figura en el formulario)', lista: D.productosFormulario },
+        { k: 'grupo', label: 'Grupo', tipo: 'select', opciones },
+        { k: 'multiplicador', label: 'Multiplicador', tipo: 'numero', ayuda: 'Vacío o 1: el precio del grupo. Ej.: EMPAQUETADO X2 lleva 2 (paga el doble).' },
+      ];
+    }
+
+    function lpProductos(body, D) {
+      lpFaltantes(body, 'Están en el formulario y no tienen precio', D.productosFormulario, 'productos:nuevo', 'producto');
+      lpAgregar(body, 'productos:nuevo', 'Agregar producto',
+        () => lpEditor('Producto nuevo', camposProducto(D), state.liqp.prefijo, lpGuardar('productos', null)));
+
+      const sinGrupo = D.tablas.productos.filter(p => !p.grupo).length;
+      const filtros = nodo('div', 'flex gap-2 items-center py-2');
+      const buscar = nodo('input', LP_INPUT.replace('mt-1 ', ''));
+      buscar.type = 'search';
+      buscar.placeholder = 'Buscar producto';
+      buscar.value = state.liqp.buscarProd;
+      filtros.appendChild(buscar);
+      if (sinGrupo || state.liqp.soloSinGrupo) {
+        const activo = state.liqp.soloSinGrupo;
+        const b = nodo('button', 'shrink-0 rounded-xl px-3 py-3 text-sm font-semibold ' +
+          (activo ? 'bg-amber-600 text-white' : 'bg-amber-50 border border-amber-200 text-amber-800'), 'Sin grupo (' + sinGrupo + ')');
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(activo));
+        b.onclick = () => { state.liqp.soloSinGrupo = !activo; renderLiqParametros(); };
+        filtros.appendChild(b);
+      }
+      body.appendChild(filtros);
+
+      const lista = nodo('div');
+      body.appendChild(lista);
+      const pintar = () => {
+        lista.innerHTML = '';
+        const q = state.liqp.buscarProd.toLowerCase();
+        const prods = D.tablas.productos
+          .filter(p => (!state.liqp.soloSinGrupo || !p.grupo) && (!q || p.producto.toLowerCase().includes(q)))
+          .sort((a, b) => porNombre(a.producto, b.producto));
+        if (!prods.length) lista.appendChild(nodo('p', 'py-4 text-sm text-slate-500 text-center', 'No hay productos que coincidan.'));
+        for (const p of prods) {
+          lpFila(lista, 'productos:' + p.fila, izq => {
+            izq.appendChild(nodo('div', 'font-medium text-slate-900 break-words', p.producto));
+            izq.appendChild(p.grupo
+              ? nodo('div', 'text-xs text-slate-500', p.grupo + (p.multiplicador ? ' × ' + p.multiplicador : '') + ' → ' + precioUnidad(p.precio) + ' c/u')
+              : nodo('div', 'text-xs font-semibold text-amber-700', 'Sin grupo: se paga $ 0'));
+          }, () => lpEditor(p.producto, camposProducto(D), p, lpGuardar('productos', p),
+            lpBorrar('productos', p, '¿Sacar «' + p.producto + '» de la lista de precios? Si alguien lo carga, va a aparecer en «Para revisar».')));
+        }
+      };
+      buscar.addEventListener('input', () => { state.liqp.buscarProd = buscar.value.trim(); pintar(); });
+      pintar();
+    }
+
+    function camposFijo(D) {
+      const personas = D.tablas.colaboradoras.map(c => c.nombre_completo).sort(porNombre);
+      return [
+        { k: 'persona', label: 'Colaboradora', tipo: 'select', opciones: [['', 'Elegí…']].concat(personas.map(p => [p, p])) },
+        { k: 'mes', label: 'Mes', tipo: 'mes' },
+        { k: 'monto', label: 'Monto en pesos', tipo: 'numero' },
+      ];
+    }
+
+    function lpMontosFijos(body, D) {
+      const mes = state.liqp.mesFijos || state.liq.mes;
+      body.appendChild(nodo('p', 'text-xs text-slate-500 pb-2', 'Lo que cobra por mes quien tiene un monto fijo (se suma a lo que haya cargado).'));
+      const lab = nodo('label', 'block pb-2');
+      lab.appendChild(nodo('span', 'text-xs font-medium text-slate-500 uppercase tracking-wide', 'Mes'));
+      const inpMes = nodo('input', LP_INPUT);
+      inpMes.type = 'month';
+      inpMes.value = mes;
+      inpMes.addEventListener('change', () => {
+        if (!/^\d{4}-\d{2}$/.test(inpMes.value)) return;
+        state.liqp.mesFijos = inpMes.value;
+        lpEditar('');
+      });
+      lab.appendChild(inpMes);
+      body.appendChild(lab);
+
+      const delMes = D.tablas.montosFijos.filter(m => m.mes === mes).sort((a, b) => porNombre(a.persona, b.persona));
+      if (!delMes.length) body.appendChild(nodo('p', 'py-2 text-sm text-slate-500', 'No hay montos fijos cargados en ' + nombreMes(mes) + '.'));
+      for (const m of delMes) {
+        lpFila(body, 'montosFijos:' + m.fila, izq => {
+          izq.appendChild(nodo('div', 'font-medium text-slate-900 break-words', m.persona));
+          izq.appendChild(nodo('div', 'text-xs text-slate-500', pesos(m.monto)));
+        }, () => lpEditor(m.persona + ' · ' + mesTitulo(m.mes), camposFijo(D), m, lpGuardar('montosFijos', m),
+          lpBorrar('montosFijos', m, '¿Borrar el monto fijo de ' + m.persona + ' en ' + nombreMes(m.mes) + '?')));
+      }
+      if (delMes.length) {
+        body.appendChild(nodo('p', 'pt-2 border-t border-slate-100 text-sm font-semibold text-slate-900 text-right',
+          'Total: ' + pesos(delMes.reduce((s, m) => s + Number(m.monto), 0))));
+      }
+
+      // Se repiten casi todos los meses: copiar los del mes anterior ahorra cargarlos uno por uno
+      const ant = mesAnterior(mes);
+      const yaTienen = new Set(delMes.map(m => m.persona.toLowerCase()));
+      const copiables = D.tablas.montosFijos.filter(m => m.mes === ant && !yaTienen.has(m.persona.toLowerCase()));
+      if (copiables.length) {
+        const b = nodo('button', 'mt-2 w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-sm disabled:opacity-60',
+          'Copiar los de ' + nombreMes(ant) + ' (' + copiables.length + ')');
+        b.type = 'button';
+        const err = nodo('p', 'text-sm font-semibold text-red-700 mt-1');
+        err.hidden = true;
+        b.onclick = async () => {
+          if (!confirm('¿Copiar a ' + nombreMes(mes) + ' los ' + copiables.length + ' montos fijos de ' + nombreMes(ant) + '? Después podés cambiar cada uno.')) return;
+          b.disabled = true;
+          try {
+            await cambioLiq({ action: 'liq_copiar_fijos', mes });
+          } catch (e) {
+            err.textContent = e.message;
+            err.hidden = false;
+            b.disabled = false;
+          }
+        };
+        body.append(b, err);
+      }
+      lpAgregar(body, 'montosFijos:nuevo', 'Agregar monto fijo',
+        () => lpEditor('Monto fijo nuevo', camposFijo(D), Object.assign({ mes }, state.liqp.prefijo), lpGuardar('montosFijos', null)));
+
+      const otros = [...new Set(D.tablas.montosFijos.map(m => m.mes))].filter(x => x !== mes).sort().reverse();
+      if (otros.length) {
+        const caja = nodo('div', 'pt-3');
+        caja.appendChild(nodo('p', 'text-xs font-medium text-slate-500 uppercase tracking-wide pb-1', 'Otros meses con montos fijos'));
+        const chips = nodo('div', 'flex flex-wrap gap-2');
+        for (const x of otros) {
+          const c = nodo('button', 'rounded-full bg-slate-100 text-slate-700 text-sm px-3 py-2', mesTitulo(x));
+          c.type = 'button';
+          c.onclick = () => { state.liqp.mesFijos = x; lpEditar(''); };
+          chips.appendChild(c);
+        }
+        caja.appendChild(chips);
+        body.appendChild(caja);
+      }
+    }
+
+    const camposDias = () => [{ k: 'mes', label: 'Mes', tipo: 'mes' }, { k: 'dias', label: 'Días laborales', tipo: 'numero' }];
+
+    function lpDiasLaborales(body, D) {
+      body.appendChild(nodo('p', 'text-xs text-slate-500 pb-1', 'Se usan para calcular inasistencias y horas faltantes. No cambian lo que se paga.'));
+      lpAgregar(body, 'diasLaborales:nuevo', 'Agregar mes', () => lpEditor('Mes nuevo', camposDias(), { mes: state.liq.mes }, lpGuardar('diasLaborales', null)));
+      for (const d of D.tablas.diasLaborales.slice().sort((a, b) => b.mes.localeCompare(a.mes))) {
+        lpFila(body, 'diasLaborales:' + d.fila, izq => {
+          izq.appendChild(nodo('span', 'font-medium text-slate-900', mesTitulo(d.mes) + ': '));
+          izq.appendChild(document.createTextNode(d.dias + ' días'));
+        }, () => lpEditor(mesTitulo(d.mes), camposDias(), d, lpGuardar('diasLaborales', d),
+          lpBorrar('diasLaborales', d, '¿Borrar los días laborales de ' + nombreMes(d.mes) + '?')));
+      }
+    }
+
+    const camposColab = () => [
+      { k: 'nombre_completo', label: 'Apellido, Nombre (igual que en el formulario)' },
+      { k: 'dni', label: 'DNI', tipo: 'numero' },
+    ];
+
+    function lpColaboradoras(body, D) {
+      body.appendChild(nodo('p', 'text-xs text-slate-500 pb-1', 'Las que aparecen en la liquidación y en el resumen para Melina, con su DNI.'));
+      lpFaltantes(body, 'Tienen usuario en la app y no están en la liquidación', D.personasSinListar, 'colaboradoras:nuevo', 'nombre_completo');
+      lpAgregar(body, 'colaboradoras:nuevo', 'Agregar colaboradora',
+        () => lpEditor('Colaboradora nueva', camposColab(), state.liqp.prefijo, lpGuardar('colaboradoras', null)));
+
+      const buscar = nodo('input', LP_INPUT.replace('mt-1 ', 'my-2 '));
+      buscar.type = 'search';
+      buscar.placeholder = 'Buscar colaboradora';
+      buscar.value = state.liqp.buscarCol;
+      body.appendChild(buscar);
+      const lista = nodo('div');
+      body.appendChild(lista);
+      const pintar = () => {
+        lista.innerHTML = '';
+        const q = state.liqp.buscarCol.toLowerCase();
+        const cols = D.tablas.colaboradoras.filter(c => !q || c.nombre_completo.toLowerCase().includes(q))
+          .sort((a, b) => porNombre(a.nombre_completo, b.nombre_completo));
+        if (!cols.length) lista.appendChild(nodo('p', 'py-4 text-sm text-slate-500 text-center', 'No hay colaboradoras que coincidan.'));
+        for (const c of cols) {
+          lpFila(lista, 'colaboradoras:' + c.fila, izq => {
+            izq.appendChild(nodo('div', 'font-medium text-slate-900 break-words', c.nombre_completo));
+            izq.appendChild(c.dni
+              ? nodo('div', 'text-xs text-slate-500', 'DNI ' + Number(c.dni).toLocaleString('es-AR'))
+              : nodo('div', 'text-xs font-semibold text-amber-700', 'Sin DNI'));
+          }, () => lpEditor(c.nombre_completo, camposColab(), c, lpGuardar('colaboradoras', c),
+            lpBorrar('colaboradoras', c, '¿Sacar a ' + c.nombre_completo + ' de la liquidación? Deja de aparecer en todos los meses, también los anteriores (hasta que exista «Cerrar mes»). Sus cargas no se borran.')));
+        }
+      };
+      buscar.addEventListener('input', () => { state.liqp.buscarCol = buscar.value.trim(); pintar(); });
+      pintar();
+    }
+
+    function lpHistorial(body, D) {
+      if (!D.historial.length) {
+        body.appendChild(nodo('p', 'text-sm text-slate-500', 'Todavía no hay cambios.'));
+        return;
+      }
+      const ul = nodo('ul', 'divide-y divide-slate-100 text-sm');
+      for (const h of D.historial) {
+        const li = nodo('li', 'py-2');
+        const cuando = /^\d{4}-\d{2}-\d{2}/.test(h.fecha) ? formatFechaCorta(h.fecha.slice(0, 10)) + ' ' + h.fecha.slice(11) : h.fecha;
+        li.appendChild(nodo('div', 'text-xs text-slate-500', cuando + ' · ' + h.persona));
+        li.appendChild(nodo('div', 'text-slate-800 break-words', h.detalle));
+        ul.appendChild(li);
+      }
+      body.appendChild(ul);
     }
 
     // =====================================================================
