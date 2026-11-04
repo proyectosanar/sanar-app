@@ -496,7 +496,7 @@
         Vista de prueba: calcula igual que el Excel, pero el Excel sigue siendo el oficial hasta que hagamos un mes en paralelo.
       </p>
 
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5">
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="lMes">Mes</label>
@@ -507,7 +507,11 @@
             <input id="lBuscar" type="search" placeholder="apellido o nombre" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
           </div>
         </div>
+        <p id="lInfoMes" class="text-sm text-slate-600"></p>
       </section>
+
+      <!-- Estado del mes: abierto (se puede cerrar) o cerrado (montos fijos) -->
+      <section id="lCierre" hidden></section>
 
       <section id="lTotales" class="grid grid-cols-2 sm:grid-cols-4 gap-2" hidden>
         <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center col-span-2 sm:col-span-1">
@@ -515,16 +519,17 @@
           <div id="lTotal" class="text-xl font-bold text-slate-900">—</div>
         </div>
         <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
-          <div class="text-xs uppercase tracking-wide text-slate-500">Producción</div>
-          <div id="lProduccion" class="text-lg font-bold text-slate-900">—</div>
+          <div class="text-xs uppercase tracking-wide text-slate-500">Colaboradoras</div>
+          <div id="lConCarga" class="text-lg font-bold text-slate-900">—</div>
+          <div id="lConCargaSub" class="text-xs text-slate-500"></div>
         </div>
         <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
-          <div class="text-xs uppercase tracking-wide text-slate-500">Por hora y fijos</div>
+          <div class="text-xs uppercase tracking-wide text-slate-500">Horas netas</div>
           <div id="lHoras" class="text-lg font-bold text-slate-900">—</div>
         </div>
         <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center col-span-2 sm:col-span-1">
-          <div class="text-xs uppercase tracking-wide text-slate-500">Con cargas</div>
-          <div id="lConCarga" class="text-lg font-bold text-slate-900">—</div>
+          <div class="text-xs uppercase tracking-wide text-slate-500">Unidades producidas</div>
+          <div id="lUnidades" class="text-lg font-bold text-slate-900">—</div>
         </div>
       </section>
 
@@ -541,14 +546,22 @@
         <svg class="w-5 h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
       </a>
 
-      <details id="lAvisos" class="rounded-2xl bg-amber-50 border border-amber-200 p-4" hidden>
-        <summary class="text-sm font-semibold text-amber-900 cursor-pointer">Para revisar (<span id="lAvisosN">0</span>)</summary>
+      <details id="lAvisos" class="rounded-2xl bg-amber-50 border border-amber-200 p-4" open hidden>
+        <summary class="text-sm font-semibold text-amber-900 cursor-pointer">Antes de cerrar el mes (<span id="lAvisosN">0</span>)</summary>
         <div id="lAvisosLista" class="mt-3 space-y-3 text-sm text-amber-900"></div>
       </details>
 
       <div id="lEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
         <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
         <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <div id="lVistaWrap" class="flex items-center justify-between gap-3" hidden>
+        <h2 class="text-sm font-semibold text-slate-900">Por colaboradora</h2>
+        <div role="group" aria-label="Cómo ver la liquidación" class="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+          <button type="button" id="lVerPlanilla" class="rounded-lg px-3 py-2 text-sm font-semibold">Planilla</button>
+          <button type="button" id="lVerTarjetas" class="rounded-lg px-3 py-2 text-sm font-semibold">Tarjetas</button>
+        </div>
       </div>
 
       <section id="lLista" class="space-y-2" aria-label="Colaboradoras"></section>
@@ -561,14 +574,35 @@
       <header>
         <h1 id="ldNombre" class="text-xl font-bold text-slate-900"></h1>
         <p id="ldMes" class="text-sm text-slate-500"></p>
+        <p id="ldDni" class="text-sm text-slate-500"></p>
       </header>
+
+      <div id="ldAviso" role="status" class="fixed bottom-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl bg-emerald-700 text-white p-3 text-sm font-semibold shadow-lg" hidden></div>
 
       <div id="ldEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
         <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
         <div data-slot="txt">Cargando…</div>
       </div>
 
-      <section id="ldResumen" class="grid grid-cols-2 sm:grid-cols-3 gap-2" hidden></section>
+      <section id="ldResumen" class="grid grid-cols-2 sm:grid-cols-4 gap-2" hidden></section>
+
+      <!-- Observaciones del mes: salen en el resumen para Melina -->
+      <section id="ldObsWrap" class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 space-y-2" hidden>
+        <label for="ldObs" class="block">
+          <span class="text-sm font-semibold text-slate-900">Observaciones del mes</span>
+          <span class="block text-xs text-slate-500">Salen en la columna Observaciones del resumen para Melina.</span>
+        </label>
+        <textarea id="ldObs" rows="2" maxlength="300" placeholder="Ej.: licencia médica del 13 al 20" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></textarea>
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" id="ldObsGuardar" class="rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60">Guardar observación</button>
+          <span id="ldObsMsg" class="text-sm" hidden></span>
+        </div>
+      </section>
+
+      <div id="ldDiasTit" hidden>
+        <h2 class="text-sm font-semibold text-slate-900">Registros del mes</h2>
+        <p id="ldDiasSub" class="text-xs text-slate-500"></p>
+      </div>
       <section id="ldDias" class="space-y-3"></section>
     </div>
   </template>
@@ -577,7 +611,7 @@
   <template id="tplLiqParametros">
     <div class="fade-in space-y-3">
       <p class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
-        Lo que cambies acá vale para la liquidación de cualquier mes, también los anteriores. Cuando esté «Cerrar mes», los meses cerrados ya no van a cambiar.
+        Lo que cambies acá vale para los meses abiertos. Los meses cerrados quedan como se cerraron, con los precios de ese momento.
       </p>
 
       <div id="lpAviso" role="status" class="fixed bottom-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl bg-emerald-700 text-white p-3 text-sm font-semibold shadow-lg" hidden></div>
@@ -617,7 +651,8 @@
               <th class="py-2 pr-2 text-right">Producción</th>
               <th class="py-2 pr-2 text-right">Por hora</th>
               <th class="py-2 pr-2 text-right">Fijo</th>
-              <th class="py-2 text-right">A pagar</th>
+              <th class="py-2 pr-2 text-right">A pagar</th>
+              <th class="py-2">Observaciones</th>
             </tr>
           </thead>
           <tbody id="lrFilas"></tbody>
@@ -627,7 +662,8 @@
               <td id="lrTotProd" class="py-2 pr-2 text-right"></td>
               <td id="lrTotHoras" class="py-2 pr-2 text-right"></td>
               <td id="lrTotFijo" class="py-2 pr-2 text-right"></td>
-              <td id="lrTotal" class="py-2 text-right"></td>
+              <td id="lrTotal" class="py-2 pr-2 text-right"></td>
+              <td></td>
             </tr>
           </tfoot>
         </table>
@@ -660,9 +696,12 @@
         persona: localStorage.getItem('sanar.verPersona') || '',
       },
       conteos: { fecha: '', ver: 'persona', datos: [] },
-      liq: { mes: localStorage.getItem('sanar.liqMes') || mesActualISO(), buscar: '', datos: null, datosMes: '' },
+      liq: { mes: localStorage.getItem('sanar.liqMes') || mesActualISO(), buscar: '', datos: null, datosMes: '', estado: null, confirmarCierre: false },
+      // Detalle de una colaboradora: qué cantidad se está corrigiendo
+      liqd: { persona: '', datos: null, editando: '' },
       // Precios y parámetros: qué secciones están abiertas, qué fila se está editando y los filtros
-      liqp: { datos: null, abiertas: new Set(['valores']), editando: '', prefijo: {}, buscarProd: '', soloSinGrupo: false, buscarCol: '', mesFijos: '' },
+      // (pendiente: formulario a abrir al llegar desde un aviso de la liquidación)
+      liqp: { datos: null, abiertas: new Set(['valores']), editando: '', prefijo: {}, pendiente: null, buscarProd: '', soloSinGrupo: false, buscarCol: '', mesFijos: '' },
     };
 
     function loadSession() {
@@ -718,6 +757,8 @@
         return;
       }
       const hash = location.hash || '#/';
+      // La planilla de liquidación y el resumen necesitan más ancho que el resto
+      document.getElementById('main').className = (/^#\/liquidacion(-resumen)?$/.test(hash) ? 'max-w-6xl' : 'max-w-3xl') + ' mx-auto px-4 py-6 pb-24';
       if (hash.startsWith('#/consulta')) return mountConsulta();
       if (hash.startsWith('#/cambiar-pin')) return mountCambiarPin();
       if (hash.startsWith('#/resetear-pin')) return mountResetear();
@@ -1493,6 +1534,40 @@
       return new Date(y, m - 1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
     }
 
+    // Cómo se ve la lista: planilla (como el Excel, mejor en la compu) o tarjetas (mejor en el celular)
+    function vistaLiq() {
+      let v = '';
+      try { v = localStorage.getItem('sanar.liqVista') || ''; } catch { /* sin almacenamiento: queda la de la pantalla */ }
+      return v || (window.innerWidth >= 768 ? 'planilla' : 'tarjetas');
+    }
+    function cambiarVistaLiq(v) {
+      try { localStorage.setItem('sanar.liqVista', v); } catch { /* sin almacenamiento */ }
+      renderLiquidacion();
+    }
+    const n2 = x => (Math.round((Number(x) || 0) * 100) / 100).toLocaleString('es-AR');
+    // "2026-10-31 18:05" → "31/10/2026 18:05"
+    const fechaHoraTxt = s => (/^\d{4}-\d{2}-\d{2}/.test(s || '')
+      ? formatFechaCorta(s.slice(0, 10)) + '/' + s.slice(0, 4) + (s.length > 10 ? ' ' + s.slice(11, 16) : '')
+      : (s || ''));
+
+    function avisoFlotante(id, msg, esError) {
+      const a = document.getElementById(id);
+      if (!a || !msg) return;
+      a.textContent = msg;
+      a.classList.toggle('bg-emerald-700', !esError);
+      a.classList.toggle('bg-red-700', !!esError);
+      a.hidden = false;
+      clearTimeout(avisoFlotante.timer);
+      avisoFlotante.timer = setTimeout(() => (a.hidden = true), esError ? 7000 : 4000);
+    }
+
+    // Abre «Precios y parámetros» con una sección desplegada (y, si hace falta, el formulario de alta ya armado)
+    function irAParametros(seccion, extra) {
+      state.liqp.abiertas.add(seccion);
+      state.liqp.pendiente = extra || null;
+      location.hash = '#/liquidacion-parametros';
+    }
+
     function mountLiquidacion() {
       if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
       if (!esGestion()) { location.hash = '#/'; return mountHome(); }
@@ -1502,6 +1577,11 @@
       const main = document.getElementById('main');
       main.innerHTML = '';
       main.appendChild(document.getElementById('tplLiquidacion').content.cloneNode(true));
+      const aviso = nodo('div', 'fixed bottom-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl text-white p-3 text-sm font-semibold shadow-lg');
+      aviso.id = 'lAviso';
+      aviso.setAttribute('role', 'status');
+      aviso.hidden = true;
+      main.appendChild(aviso);
 
       const selMes = document.getElementById('lMes');
       const hoy = new Date();
@@ -1517,12 +1597,15 @@
       if (selMes.value !== state.liq.mes) state.liq.mes = selMes.value;
       selMes.addEventListener('change', () => {
         state.liq.mes = selMes.value;
-        localStorage.setItem('sanar.liqMes', selMes.value);
+        state.liq.confirmarCierre = false;
+        try { localStorage.setItem('sanar.liqMes', selMes.value); } catch { /* sin almacenamiento */ }
         cargarLiquidacion();
       });
       const buscar = document.getElementById('lBuscar');
       buscar.value = state.liq.buscar;
       buscar.addEventListener('input', () => { state.liq.buscar = buscar.value.trim().toLowerCase(); renderLiquidacion(); });
+      document.getElementById('lVerPlanilla').onclick = () => cambiarVistaLiq('planilla');
+      document.getElementById('lVerTarjetas').onclick = () => cambiarVistaLiq('tarjetas');
 
       if (state.liq.datos && state.liq.datosMes === state.liq.mes) renderLiquidacion();
       else cargarLiquidacion();
@@ -1530,12 +1613,12 @@
 
     async function cargarLiquidacion() {
       document.getElementById('lLista').innerHTML = '';
-      document.getElementById('lTotales').hidden = true;
-      document.getElementById('lAvisos').hidden = true;
+      for (const id of ['lTotales', 'lAvisos', 'lCierre', 'lVistaWrap']) document.getElementById(id).hidden = true;
       estadoEn('lEstado', 'Calculando la liquidación…', true);
       try {
         const data = await api({ action: 'liquidacion', mes: state.liq.mes });
         state.liq.datos = data.liquidacion;
+        state.liq.estado = data.estado;
         state.liq.datosMes = state.liq.mes;
         renderLiquidacion();
       } catch (err) {
@@ -1543,25 +1626,69 @@
       }
     }
 
+    // Cerrar, reabrir o asignar registros: después se vuelve a calcular la liquidación
+    async function accionLiq(params, pregunta, boton) {
+      if (pregunta && !confirm(pregunta)) return;
+      if (boton) boton.disabled = true;
+      try {
+        const data = await api(params);
+        state.liq.confirmarCierre = false;
+        await cargarLiquidacion();
+        avisoFlotante('lAviso', data.aviso);
+      } catch (err) {
+        avisoFlotante('lAviso', err.message, true);
+      } finally {
+        if (boton && boton.isConnected) boton.disabled = false;
+      }
+    }
+
+    function cantidadAvisosLiq(L) {
+      const av = L.avisos;
+      return av.productosSinPrecio.length + av.productosSinCatalogo.length + av.personasNoListadas.length + (L.diasLaborales == null ? 1 : 0);
+    }
+
     function renderLiquidacion() {
       const lista = document.getElementById('lLista');
       const L = state.liq.datos;
+      const E = state.liq.estado || { cerrado: false, mesesCerrados: [] };
       if (!lista || !L) return;
       document.getElementById('lEstado').hidden = true;
 
+      for (const o of document.getElementById('lMes').options) {
+        o.textContent = nombreMes(o.value) + (E.mesesCerrados.includes(o.value) ? ' · cerrado' : '');
+      }
+      document.getElementById('lInfoMes').textContent = (E.cerrado ? 'Cerrado' : 'Abierto') + ' · ' + (L.diasLaborales != null
+        ? L.diasLaborales + ' días laborales · mínimo ' + n2(L.diasLaborales * (L.horasMinimasPorDia || 6)) + ' hs por colaboradora'
+        : 'faltan los días laborales del mes');
+      renderCierreLiq(L, E);
+
       const t = L.totales;
       document.getElementById('lTotal').textContent = pesos(t.aPagar);
-      document.getElementById('lProduccion').textContent = pesos(t.montoProduccion);
-      document.getElementById('lHoras').textContent = pesos(t.montoTrabajoPorHora);
-      document.getElementById('lConCarga').textContent = L.filas.filter(f => f.registros > 0).length + ' de ' + L.filas.length;
+      document.getElementById('lConCarga').textContent = String(L.filas.filter(f => f.aPagar).length);
+      document.getElementById('lConCargaSub').textContent = L.filas.filter(f => f.registros > 0).length + ' con cargas · ' +
+        L.filas.filter(f => f.montoFijo).length + ' con monto fijo';
+      document.getElementById('lHoras').textContent = n2(t.hsNetas);
+      document.getElementById('lUnidades').textContent = num(t.cantProductos);
       document.getElementById('lTotales').hidden = false;
-      renderAvisosLiquidacion(L);
+      renderAvisosLiquidacion(L, E);
+
+      const planilla = vistaLiq() === 'planilla';
+      for (const [id, activo] of [['lVerPlanilla', planilla], ['lVerTarjetas', !planilla]]) {
+        const b = document.getElementById(id);
+        b.setAttribute('aria-pressed', String(activo));
+        b.className = 'rounded-lg px-3 py-2 text-sm font-semibold ' + (activo ? 'bg-white text-slate-900 shadow' : 'text-slate-600');
+      }
+      document.getElementById('lVistaWrap').hidden = false;
 
       const q = state.liq.buscar;
       lista.innerHTML = '';
       const filas = L.filas.filter(f => !q || f.persona.toLowerCase().includes(q));
       if (!filas.length) {
         lista.appendChild(nodo('p', 'text-center py-10 text-slate-500', 'No hay colaboradoras que coincidan con la búsqueda.'));
+        return;
+      }
+      if (planilla) {
+        lista.appendChild(planillaLiq(filas));
         return;
       }
       for (const f of filas) {
@@ -1578,39 +1705,187 @@
         if (f.montoFijo) partes.push('Fijo ' + pesos(f.montoFijo));
         partes.push(f.diasConCarga ? f.diasConCarga + (f.diasConCarga === 1 ? ' día' : ' días') : 'Sin cargas');
         a.appendChild(nodo('p', 'text-xs text-slate-500 mt-1', partes.join(' · ')));
+        if (f.observacion) a.appendChild(nodo('p', 'text-xs text-slate-700 mt-1 break-words', 'Obs.: ' + f.observacion));
         lista.appendChild(a);
       }
     }
 
-    function renderAvisosLiquidacion(L) {
+    // La planilla del mes, con las mismas columnas que el resumen del Excel
+    function planillaLiq(filas) {
+      const caja = nodo('div', 'bg-white rounded-2xl border border-slate-200 shadow-card overflow-x-auto');
+      const tabla = nodo('table', 'w-full min-w-[900px] text-sm border-collapse');
+      const cols = [['Colaboradora', 'text-left'], ['Hs netas'], ['Unidades'], ['Producción'], ['Trabajo x hora'], ['Monto fijo'],
+        ['A pagar'], ['Inasist.'], ['Faltan hs'], ['Observaciones', 'text-left']];
+      const thead = nodo('thead');
+      const trh = nodo('tr', 'border-b border-slate-200');
+      for (const [c, al] of cols) trh.appendChild(nodo('th', 'px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap ' + (al || 'text-right'), c));
+      thead.appendChild(trh);
+      tabla.appendChild(thead);
+      const tbody = nodo('tbody');
+      const guion = (v, fmt) => (v ? fmt(v) : '—');
+      for (const f of filas) {
+        const tr = nodo('tr', 'border-b border-slate-100 hover:bg-slate-50' + (f.aPagar ? '' : ' text-slate-400'));
+        const td1 = nodo('td', 'px-3 py-2 whitespace-nowrap');
+        const a = nodo('a', 'font-semibold text-brand-700 hover:underline', f.persona);
+        a.href = '#/liquidacion-detalle/' + encodeURIComponent(f.persona);
+        td1.appendChild(a);
+        tr.appendChild(td1);
+        const celda = (txt, clase) => tr.appendChild(nodo('td', 'px-3 py-2 text-right whitespace-nowrap ' + (clase || ''), txt));
+        celda(guion(f.hsNetas, n2));
+        celda(guion(f.cantProductos, num));
+        celda(guion(f.montoProduccion, pesos));
+        celda(f.montoHoras ? pesos(f.montoHoras) + ' · ' + n2(f.horasTrabajo) + ' h' : '—');
+        celda(guion(f.montoFijo, pesos));
+        celda(pesos(f.aPagar), 'font-bold text-slate-900');
+        celda(f.inasistencias == null ? '—' : String(f.inasistencias));
+        celda(f.faltanteHsMinimas == null ? '—' : n2(f.faltanteHsMinimas));
+        tr.appendChild(nodo('td', 'px-3 py-2 text-xs text-slate-700 min-w-[180px] break-words', f.observacion || ''));
+        tbody.appendChild(tr);
+      }
+      tabla.appendChild(tbody);
+      const suma = campo => filas.reduce((s, f) => s + (Number(f[campo]) || 0), 0);
+      const tf = nodo('tr', 'border-t-2 border-slate-300 font-bold text-slate-900');
+      const pie = (txt, clase) => tf.appendChild(nodo('td', 'px-3 py-2 whitespace-nowrap ' + (clase || 'text-right'), txt));
+      pie('Total' + (filas.length < state.liq.datos.filas.length ? ' (filtradas)' : ''), 'text-left');
+      pie(n2(suma('hsNetas')));
+      pie(num(suma('cantProductos')));
+      pie(pesos(suma('montoProduccion')));
+      pie(pesos(suma('montoHoras')));
+      pie(pesos(suma('montoFijo')));
+      pie(pesos(suma('aPagar')));
+      pie(num(suma('inasistencias')));
+      pie(n2(suma('faltanteHsMinimas')));
+      pie('');
+      const tfoot = nodo('tfoot');
+      tfoot.appendChild(tf);
+      tabla.appendChild(tfoot);
+      caja.appendChild(tabla);
+      return caja;
+    }
+
+    // Estado del mes: abierto (con «Cerrar el mes» y su confirmación) o cerrado
+    function renderCierreLiq(L, E) {
+      const box = document.getElementById('lCierre');
+      box.innerHTML = '';
+      box.hidden = false;
+      const mesTxt = nombreMes(state.liq.mes);
+      if (E.cerrado) {
+        box.className = 'rounded-2xl bg-emerald-50 border border-emerald-200 p-4 space-y-1';
+        box.appendChild(nodo('p', 'font-semibold text-emerald-900', mesTitulo(state.liq.mes) + ' está cerrado' +
+          (E.cuando ? ' desde el ' + fechaHoraTxt(E.cuando) : '') + (E.cerradoPor ? ' (lo cerró ' + E.cerradoPor + ')' : '') + '.'));
+        box.appendChild(nodo('p', 'text-sm text-emerald-900', 'Estos montos quedan fijos: si después cambian los precios, ' + mesTxt +
+          ' no se modifica. Ya no se pueden corregir registros ni observaciones de este mes.'));
+        if (E.puedeReabrir) {
+          const b = nodo('button', 'text-sm font-semibold text-emerald-900 underline min-h-[44px] disabled:opacity-60', 'Reabrir el mes (solo Admin)');
+          b.type = 'button';
+          b.onclick = () => accionLiq({ action: 'liq_reabrir', mes: state.liq.mes },
+            '¿Reabrir ' + mesTxt + '? Se vuelve a calcular con los precios de ahora.', b);
+          box.appendChild(b);
+        }
+        return;
+      }
+      box.className = 'rounded-2xl bg-white border border-slate-200 shadow-card p-4 space-y-3';
+      if (!state.liq.confirmarCierre) {
+        const fila = nodo('div', 'flex flex-wrap items-center justify-between gap-3');
+        fila.appendChild(nodo('p', 'text-sm text-slate-600 flex-1 min-w-[220px]',
+          'Cuando esté todo revisado, cerrá el mes: los montos quedan fijos y el resumen para Melina ya es el definitivo.'));
+        const b = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm shrink-0', 'Cerrar ' + mesTxt);
+        b.type = 'button';
+        b.onclick = () => { state.liq.confirmarCierre = true; renderCierreLiq(L, E); };
+        fila.appendChild(b);
+        box.appendChild(fila);
+        return;
+      }
+      const n = cantidadAvisosLiq(L);
+      const conMonto = L.filas.filter(f => f.aPagar).length;
+      box.appendChild(nodo('p', 'font-semibold text-slate-900', '¿Cerrar ' + mesTxt + '?'));
+      box.appendChild(nodo('p', 'text-sm text-slate-700', 'Se congelan los montos de las ' + conMonto + ' colaboradoras con algo a pagar (total ' +
+        pesos(L.totales.aPagar) + '). Después ya no se pueden corregir registros ni observaciones de este mes.'));
+      if (n) box.appendChild(nodo('p', 'text-sm font-semibold text-amber-800', 'Quedan ' + n + (n === 1 ? ' aviso' : ' avisos') +
+        ' sin resolver (más abajo). Podés cerrar igual, pero conviene revisarlos antes.'));
+      const botones = nodo('div', 'flex flex-wrap gap-2');
+      const bCerrar = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60', 'Sí, cerrar el mes');
+      bCerrar.type = 'button';
+      bCerrar.onclick = () => accionLiq({ action: 'liq_cerrar', mes: state.liq.mes }, null, bCerrar);
+      const bCancelar = nodo('button', 'rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold px-5 py-3 text-sm', 'Cancelar');
+      bCancelar.type = 'button';
+      bCancelar.onclick = () => { state.liq.confirmarCierre = false; renderCierreLiq(L, E); };
+      botones.append(bCerrar, bCancelar);
+      box.appendChild(botones);
+    }
+
+    // Lo que conviene resolver antes de cerrar, cada cosa con su arreglo
+    function renderAvisosLiquidacion(L, E) {
       const cont = document.getElementById('lAvisosLista');
+      const caja = document.getElementById('lAvisos');
       cont.innerHTML = '';
-      let n = 0;
-      const bloque = (titulo, items) => {
+      const n = cantidadAvisosLiq(L);
+      document.getElementById('lAvisosN').textContent = n;
+      caja.hidden = n === 0 || E.cerrado;
+      if (caja.hidden) return;
+
+      const bloque = (titulo, items, boton) => {
         if (!items.length) return;
-        n += items.length;
         const div = nodo('div');
         div.appendChild(nodo('p', 'font-semibold', titulo));
         const ul = nodo('ul', 'mt-1 space-y-1');
         for (const txt of items) ul.appendChild(nodo('li', 'break-words', txt));
         div.appendChild(ul);
+        if (boton) {
+          const b = nodo('button', 'mt-1 font-semibold underline min-h-[44px]', boton[0]);
+          b.type = 'button';
+          b.onclick = boton[1];
+          div.appendChild(b);
+        }
         cont.appendChild(div);
       };
       const av = L.avisos;
-      bloque('Productos sin precio (no tienen grupo), hoy se pagan $ 0:',
-        av.productosSinPrecio.map(p => p.producto + ' · ' + num(p.cantidad) + ' u. (' + p.personas.join(', ') + ')'));
-      bloque('Productos que no están en la lista de precios:',
-        av.productosSinCatalogo.map(p => p.producto + ' · ' + num(p.cantidad) + ' u. (' + p.personas.join(', ') + ')'));
-      bloque('Cargaron en el formulario pero no están en la lista de colaboradoras:',
-        av.personasNoListadas.map(p => p.persona + ' · ' + p.registros + (p.registros === 1 ? ' carga' : ' cargas')));
-      if (L.diasLaborales == null) bloque('Falta cargar los días laborales del mes:', ['Sin ese dato no se calculan inasistencias ni horas faltantes.']);
-      if (n) {
-        const a = nodo('a', 'inline-block font-semibold underline min-h-[44px] py-2', 'Corregirlo en «Precios y parámetros» →');
-        a.href = '#/liquidacion-parametros';
-        cont.appendChild(a);
+      const txtProd = p => p.producto + ' · ' + num(p.cantidad) + ' u. (' + p.personas.join(', ') + ')';
+      bloque('Productos sin precio (no tienen grupo), hoy se pagan $ 0:', av.productosSinPrecio.map(txtProd),
+        ['Asignarles grupo', () => { state.liqp.soloSinGrupo = true; irAParametros('productos'); }]);
+      bloque('Productos que no están en la lista de precios:', av.productosSinCatalogo.map(txtProd),
+        ['Agregarlos a la lista de precios', () => irAParametros('productos')]);
+
+      if (av.personasNoListadas.length) {
+        const div = nodo('div', 'space-y-2');
+        div.appendChild(nodo('p', 'font-semibold', 'Registros con un nombre que no está en la lista de colaboradoras:'));
+        const personas = L.filas.map(f => f.persona);
+        for (const p of av.personasNoListadas) {
+          const item = nodo('div', 'rounded-xl bg-white/70 border border-amber-200 p-3 space-y-2');
+          item.appendChild(nodo('p', 'break-words', '«' + p.persona + '» cargó ' + p.registros + (p.registros === 1 ? ' registro.' : ' registros.') +
+            (p.sugerencia ? ' ¿Es ' + p.sugerencia + '?' : '')));
+          const fila = nodo('div', 'flex flex-wrap items-center gap-2');
+          const sel = nodo('select', 'rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm min-h-[44px] max-w-full');
+          sel.setAttribute('aria-label', 'Colaboradora a la que se le asignan los registros de ' + p.persona);
+          const vacia = nodo('option', null, 'Elegí a quién…');
+          vacia.value = '';
+          sel.appendChild(vacia);
+          for (const nom of personas) {
+            const o = nodo('option', null, nom);
+            o.value = nom;
+            sel.appendChild(o);
+          }
+          sel.value = p.sugerencia || '';
+          const b = nodo('button', 'rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 text-sm min-h-[44px] disabled:opacity-60',
+            p.sugerencia ? 'Sí, asignárselo' : 'Asignar');
+          b.type = 'button';
+          b.onclick = () => {
+            if (!sel.value) return avisoFlotante('lAviso', 'Elegí a qué colaboradora se le asignan.', true);
+            accionLiq({ action: 'liq_reasignar', mes: state.liq.mes, persona: p.persona, nueva: sel.value }, null, b);
+          };
+          const nueva = nodo('button', 'text-sm font-semibold underline min-h-[44px]', 'Es una colaboradora nueva');
+          nueva.type = 'button';
+          nueva.onclick = () => irAParametros('colaboradoras', { editando: 'colaboradoras:nuevo', prefijo: { nombre_completo: p.persona } });
+          fila.append(sel, b, nueva);
+          item.appendChild(fila);
+          div.appendChild(item);
+        }
+        cont.appendChild(div);
       }
-      document.getElementById('lAvisosN').textContent = n;
-      document.getElementById('lAvisos').hidden = n === 0;
+      if (L.diasLaborales == null) {
+        bloque('Faltan los días laborales del mes:', ['Sin ese dato no se calculan inasistencias ni horas faltantes.'],
+          ['Cargarlos', () => irAParametros('diasLaborales', { editando: 'diasLaborales:nuevo', prefijo: { mes: state.liq.mes } })]);
+      }
     }
 
     function mountLiqResumen() {
@@ -1629,6 +1904,7 @@
       estadoEn('lrEstado', 'Calculando la liquidación…', true);
       api({ action: 'liquidacion', mes: state.liq.mes }).then(data => {
         state.liq.datos = data.liquidacion;
+        state.liq.estado = data.estado;
         state.liq.datosMes = state.liq.mes;
         document.getElementById('lrEstado').hidden = true;
         renderLiqResumen();
@@ -1637,12 +1913,13 @@
 
     function renderLiqResumen() {
       const L = state.liq.datos;
+      const E = state.liq.estado || {};
       const tbody = document.getElementById('lrFilas');
       if (!tbody || !L) return;
-      const mesTxt = nombreMes(state.liq.mes);
-      document.getElementById('lrMes').textContent = mesTxt.charAt(0).toUpperCase() + mesTxt.slice(1);
-      document.getElementById('lrSub').textContent = 'Proyecto Sanar · generado el ' +
-        new Date().toLocaleDateString('es-AR') + (L.diasLaborales != null ? ' · ' + L.diasLaborales + ' días laborales' : '');
+      document.getElementById('lrMes').textContent = mesTitulo(state.liq.mes);
+      document.getElementById('lrSub').textContent = 'Proyecto Sanar · ' +
+        (E.cerrado ? 'mes cerrado el ' + fechaHoraTxt((E.cuando || '').slice(0, 10)) : 'mes abierto: los montos todavía pueden cambiar') +
+        ' · generado el ' + new Date().toLocaleDateString('es-AR') + (L.diasLaborales != null ? ' · ' + L.diasLaborales + ' días laborales' : '');
       tbody.innerHTML = '';
       L.filas.forEach((f, i) => {
         const tr = nodo('tr', 'border-b border-slate-100');
@@ -1654,7 +1931,8 @@
         celda(f.montoProduccion ? pesos(f.montoProduccion) : '—', 'text-right');
         celda(f.montoHoras ? pesos(f.montoHoras) : '—', 'text-right');
         celda(f.montoFijo ? pesos(f.montoFijo) : '—', 'text-right');
-        tr.appendChild(nodo('td', 'py-1.5 text-right font-semibold text-slate-900', pesos(f.aPagar)));
+        celda(pesos(f.aPagar), 'text-right font-semibold text-slate-900');
+        celda(f.observacion || '', 'text-slate-700');
         tbody.appendChild(tr);
       });
       const suma = campo => L.filas.reduce((acc, f) => acc + (f[campo] || 0), 0);
@@ -1676,46 +1954,101 @@
       main.innerHTML = '';
       main.appendChild(document.getElementById('tplLiqDetalle').content.cloneNode(true));
       document.getElementById('ldNombre').textContent = persona;
-      const mesTxt = nombreMes(state.liq.mes);
-      document.getElementById('ldMes').textContent = mesTxt.charAt(0).toUpperCase() + mesTxt.slice(1);
-      cargarLiqDetalle(persona);
+      document.getElementById('ldMes').textContent = mesTitulo(state.liq.mes);
+      state.liqd = { persona, datos: null, editando: '' };
+      cargarLiqDetalle();
     }
 
-    async function cargarLiqDetalle(persona) {
-      estadoEn('ldEstado', 'Cargando…', true);
+    async function cargarLiqDetalle() {
+      if (!state.liqd.datos) estadoEn('ldEstado', 'Cargando…', true);
       try {
-        const data = await api({ action: 'liquidacion_detalle', mes: state.liq.mes, persona });
+        const data = await api({ action: 'liquidacion_detalle', mes: state.liq.mes, persona: state.liqd.persona });
+        state.liqd.datos = data;
         document.getElementById('ldEstado').hidden = true;
-        renderLiqDetalle(data);
+        renderLiqDetalle();
       } catch (err) {
         estadoEn('ldEstado', err.message);
       }
     }
 
-    function renderLiqDetalle(data) {
+    // Después de un ajuste: se recalcula el detalle y la liquidación del mes se vuelve a pedir al volver
+    async function ajusteDetalle(params) {
+      const data = await api(params);
+      state.liqd.editando = '';
+      state.liq.datos = null;
+      await cargarLiqDetalle();
+      avisoFlotante('ldAviso', data.aviso);
+    }
+
+    function renderLiqDetalle() {
+      const data = state.liqd.datos;
       const res = document.getElementById('ldResumen');
       const dias = document.getElementById('ldDias');
-      if (!res) return;
+      if (!res || !data) return;
+      const E = data.estado || {};
       const f = data.fila;
+      document.getElementById('ldMes').textContent = mesTitulo(state.liq.mes) + ' · ' + (E.cerrado ? 'cerrado' : 'abierto');
+      const cobra = [];
+      if (f && f.montoProduccion) cobra.push('por producción');
+      if (f && f.montoHoras) cobra.push('por hora');
+      if (f && f.montoFijo) cobra.push('monto fijo');
+      document.getElementById('ldDni').textContent = (data.dni ? 'DNI ' + Number(data.dni).toLocaleString('es-AR') : 'Sin DNI cargado') +
+        (cobra.length ? ' · cobra ' + cobra.join(' y ') : '');
+
       res.innerHTML = '';
-      const dato = (titulo, valor, destacado) => {
+      const dato = (titulo, valor, sub, destacado) => {
         const d = nodo('div', 'rounded-2xl bg-white border border-slate-200 p-3 text-center' + (destacado ? ' col-span-2 sm:col-span-1' : ''));
         d.appendChild(nodo('div', 'text-xs uppercase tracking-wide text-slate-500', titulo));
         d.appendChild(nodo('div', (destacado ? 'text-xl' : 'text-lg') + ' font-bold text-slate-900', valor));
+        if (sub) d.appendChild(nodo('div', 'text-xs text-slate-500', sub));
         res.appendChild(d);
       };
       if (f) {
-        dato('A pagar', pesos(f.aPagar), true);
-        dato('Producción', pesos(f.montoProduccion));
-        dato('Por hora', pesos(f.montoHoras));
+        dato('A pagar', pesos(f.aPagar), '', true);
+        dato('Producción', pesos(f.montoProduccion), num(f.cantProductos) + ' unidades');
+        dato('Trabajo por hora', pesos(f.montoHoras), f.horasTrabajo ? n2(f.horasTrabajo) + ' h' : '');
         if (f.montoFijo) dato('Monto fijo', pesos(f.montoFijo));
-        dato('Horas netas', horasTxt(f.hsNetas));
-        dato('Días con carga', String(f.diasConCarga));
+        dato('Horas netas', n2(f.hsNetas), data.diasLaborales != null ? 'Mínimo del mes: ' + n2(data.diasLaborales * (data.horasMinimasPorDia || 6)) : '');
+        dato('Días con carga', f.diasConCarga + (data.diasLaborales != null ? ' de ' + data.diasLaborales : ''));
         if (f.inasistencias != null) dato('Inasistencias', String(f.inasistencias));
-        if (f.faltanteHsMinimas != null) dato('Faltan hs mín.', horasTxt(f.faltanteHsMinimas));
+        if (f.faltanteHsMinimas != null) dato('Faltan hs mín.', n2(f.faltanteHsMinimas));
         res.hidden = false;
       }
 
+      // Observación del mes
+      const obsWrap = document.getElementById('ldObsWrap');
+      const obs = document.getElementById('ldObs');
+      const bObs = document.getElementById('ldObsGuardar');
+      const msg = document.getElementById('ldObsMsg');
+      obsWrap.hidden = !f;
+      obs.value = f ? f.observacion || '' : '';
+      obs.readOnly = !!E.cerrado;
+      bObs.hidden = !!E.cerrado;
+      msg.hidden = !E.cerrado;
+      msg.className = 'text-sm text-slate-500';
+      msg.textContent = E.cerrado ? 'El mes está cerrado: la observación ya no se cambia.' : '';
+      bObs.onclick = async () => {
+        bObs.disabled = true;
+        msg.hidden = true;
+        try {
+          const r = await api({ action: 'liq_observacion', mes: state.liq.mes, persona: state.liqd.persona, texto: obs.value.trim() });
+          f.observacion = obs.value.trim();
+          state.liq.datos = null;
+          msg.className = 'text-sm font-semibold text-emerald-700';
+          msg.textContent = r.aviso;
+        } catch (err) {
+          msg.className = 'text-sm font-semibold text-red-700';
+          msg.textContent = err.message;
+        } finally {
+          msg.hidden = false;
+          bObs.disabled = false;
+        }
+      };
+
+      // Registros día por día, con «Corregir» en cada cantidad
+      document.getElementById('ldDiasTit').hidden = !data.registros.length;
+      document.getElementById('ldDiasSub').textContent = data.registros.length + (data.registros.length === 1 ? ' registro' : ' registros') +
+        (E.cerrado ? '.' : ' · cada corrección queda registrada con su valor anterior y el motivo.');
       dias.innerHTML = '';
       if (!data.registros.length) {
         dias.appendChild(nodo('p', 'text-center py-10 text-slate-500', 'No tiene cargas en este mes.'));
@@ -1730,31 +2063,143 @@
         head.appendChild(tit);
         head.appendChild(nodo('div', 'text-lg font-bold text-slate-900 shrink-0', pesos(r.total)));
         card.appendChild(head);
-        if (r.ingreso != null || r.egreso != null) {
-          card.appendChild(nodo('p', 'text-sm text-slate-600 mt-1',
-            horaDecimal(r.ingreso) + ' → ' + horaDecimal(r.egreso) + ' · ' + horasTxt(r.hsNetas) + ' netas'));
-        }
-        const ul = nodo('ul', 'mt-2 border-t border-slate-100 pt-2 text-sm text-slate-700 space-y-1');
-        for (const it of r.items) {
-          const li = nodo('li', 'flex justify-between gap-3');
-          const izq = nodo('span', 'min-w-0 break-words');
-          izq.appendChild(document.createTextNode(it.producto + ' · ' + num(it.cantidad) + ' × '));
-          izq.appendChild(it.precio
-            ? document.createTextNode(precioUnidad(it.precio))
-            : nodo('span', 'font-semibold text-amber-700', 'sin precio'));
-          li.appendChild(izq);
-          li.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', pesos(it.monto)));
-          ul.appendChild(li);
-        }
-        for (const tr of r.trabajos) {
-          const li = nodo('li', 'flex justify-between gap-3');
-          li.appendChild(nodo('span', 'min-w-0 break-words', (tr.tipo || 'Trabajo por hora') + ' · ' + horasTxt(tr.horas)));
-          li.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', pesos(tr.monto)));
-          ul.appendChild(li);
-        }
+        const info = [];
+        if (r.ingreso != null || r.egreso != null) info.push(horaDecimal(r.ingreso) + ' → ' + horaDecimal(r.egreso));
+        if (r.hsSalida) info.push('salió ' + n2(r.hsSalida) + ' h');
+        info.push(n2(r.hsNetas) + ' hs netas');
+        if (r.actividad) info.push(r.actividad);
+        card.appendChild(nodo('p', 'text-sm text-slate-600 mt-1', info.join(' · ')));
+        if (r.nombreCargado) card.appendChild(nodo('p', 'text-xs font-semibold text-amber-700 mt-1', 'Lo cargó como «' + r.nombreCargado + '»: se le asignó en la liquidación.'));
+        const ul = nodo('ul', 'mt-2 border-t border-slate-100 pt-2 text-sm text-slate-700 divide-y divide-slate-100');
+        for (const it of r.items) ul.appendChild(lineaCorregible(r, it, false, E));
+        for (const t of r.trabajos) ul.appendChild(lineaCorregible(r, t, true, E));
+        for (const a of r.anulados) ul.appendChild(lineaAnulada(a, E));
         if (ul.children.length) card.appendChild(ul);
         dias.appendChild(card);
       }
+    }
+
+    function botonChico(texto, fn, color) {
+      const b = nodo('button', 'text-sm font-semibold underline min-h-[44px] px-1 disabled:opacity-60 ' + (color || 'text-brand-700'), texto);
+      b.type = 'button';
+      b.onclick = fn;
+      return b;
+    }
+
+    async function deshacerCorreccion(id, boton) {
+      boton.disabled = true;
+      try {
+        await ajusteDetalle({ action: 'liq_deshacer_correccion', id });
+      } catch (err) {
+        avisoFlotante('ldAviso', err.message, true);
+        if (boton.isConnected) boton.disabled = false;
+      }
+    }
+
+    // Un producto o un trabajo por hora del día, con su corrección (si tiene) y los botones para corregir
+    function lineaCorregible(r, it, esTrabajo, E) {
+      const clave = r.clave + '#' + it.columna;
+      if (state.liqd.editando === clave) return editorCorreccion(r, it, esTrabajo);
+      const li = nodo('li', 'py-1.5');
+      const fila = nodo('div', 'flex justify-between gap-3');
+      const izq = nodo('span', 'min-w-0 break-words');
+      if (esTrabajo) {
+        izq.textContent = (it.tipo || 'Trabajo por hora') + ' · ' + n2(it.horas) + ' h';
+      } else {
+        izq.appendChild(document.createTextNode(it.producto + ' · ' + num(it.cantidad) + ' × '));
+        izq.appendChild(it.precio ? document.createTextNode(precioUnidad(it.precio)) : nodo('span', 'font-semibold text-amber-700', 'sin precio'));
+      }
+      fila.appendChild(izq);
+      fila.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', pesos(it.monto)));
+      li.appendChild(fila);
+      if (it.correccion) {
+        li.appendChild(nodo('p', 'text-xs font-semibold text-amber-700', 'Corregido por la supervisora · antes ' + n2(it.correccion.antes) +
+          (esTrabajo ? ' h' : '') + ' · ' + it.correccion.motivo));
+      }
+      if (!E.cerrado) {
+        const acciones = nodo('div', 'flex gap-3');
+        acciones.appendChild(botonChico(esTrabajo ? 'Corregir horas' : 'Corregir', () => { state.liqd.editando = clave; renderLiqDetalle(); }));
+        if (it.correccion) {
+          const b = botonChico('Deshacer corrección', () => deshacerCorreccion(it.correccion.id, b), 'text-slate-600');
+          acciones.appendChild(b);
+        }
+        li.appendChild(acciones);
+      }
+      return li;
+    }
+
+    // Lo que se corrigió a 0: ya no suma, pero queda a la vista para poder deshacerlo
+    function lineaAnulada(a, E) {
+      const li = nodo('li', 'py-1.5');
+      li.appendChild(nodo('p', 'text-slate-500 line-through break-words', a.item));
+      li.appendChild(nodo('p', 'text-xs font-semibold text-amber-700', 'Corregido a 0 por la supervisora · antes ' + n2(a.correccion.antes) + ' · ' + a.correccion.motivo));
+      if (!E.cerrado) {
+        const b = botonChico('Deshacer corrección', () => deshacerCorreccion(a.correccion.id, b), 'text-slate-600');
+        li.appendChild(b);
+      }
+      return li;
+    }
+
+    function editorCorreccion(r, it, esTrabajo) {
+      const li = nodo('li', 'py-2');
+      const form = nodo('form', 'rounded-xl border border-brand-200 bg-brand-50 p-3 space-y-3');
+      const original = it.correccion ? it.correccion.antes : (esTrabajo ? it.horas : it.cantidad);
+      const precio = esTrabajo ? (it.horas ? it.monto / it.horas : 0) : (it.precio || 0);
+      form.appendChild(nodo('p', 'text-sm font-semibold text-slate-900 break-words',
+        formatFechaLegible(r.fecha) + ' · ' + (esTrabajo ? it.tipo || 'Trabajo por hora' : it.producto)));
+      form.appendChild(nodo('p', 'text-sm text-slate-700', 'Cargó: ' + n2(original) + (esTrabajo ? ' h' : ' unidades')));
+      const campo = (label, tipo) => {
+        const lab = nodo('label', 'block');
+        lab.appendChild(nodo('span', 'text-xs font-medium text-slate-500 uppercase tracking-wide', label));
+        const inp = nodo('input', LP_INPUT);
+        inp.type = 'text';
+        if (tipo) inp.inputMode = tipo;
+        lab.appendChild(inp);
+        form.appendChild(lab);
+        return inp;
+      };
+      const inpValor = campo(esTrabajo ? 'Horas correctas' : 'Cantidad correcta', 'decimal');
+      inpValor.value = String(esTrabajo ? it.horas : it.cantidad);
+      const inpMotivo = campo('Motivo');
+      inpMotivo.placeholder = esTrabajo ? 'Ej.: fueron 2 h, no 3' : 'Ej.: la contadora contó 150';
+      inpMotivo.value = it.correccion ? it.correccion.motivo : '';
+      const vista = nodo('p', 'text-sm text-slate-700');
+      const actualizar = () => {
+        const v = Number(inpValor.value.replace(',', '.'));
+        vista.textContent = isFinite(v) && inpValor.value.trim() !== ''
+          ? 'Nuevo subtotal: ' + pesos(v * precio) + (precio ? ' (' + precioUnidad(precio) + (esTrabajo ? ' la hora)' : ' por unidad)') : '')
+          : '';
+      };
+      inpValor.addEventListener('input', actualizar);
+      actualizar();
+      form.appendChild(vista);
+      const error = nodo('p', 'text-sm font-semibold text-red-700');
+      error.hidden = true;
+      form.appendChild(error);
+      const botones = nodo('div', 'flex flex-wrap gap-2');
+      const bGuardar = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60', 'Guardar corrección');
+      bGuardar.type = 'submit';
+      const bCancelar = nodo('button', 'rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold px-5 py-3 text-sm', 'Cancelar');
+      bCancelar.type = 'button';
+      bCancelar.onclick = () => { state.liqd.editando = ''; renderLiqDetalle(); };
+      botones.append(bGuardar, bCancelar);
+      form.appendChild(botones);
+      form.onsubmit = async ev => {
+        ev.preventDefault();
+        error.hidden = true;
+        bGuardar.disabled = true;
+        try {
+          await ajusteDetalle({ action: 'liq_corregir', clave: r.clave, columna: it.columna, valor: inpValor.value.trim(), motivo: inpMotivo.value.trim() });
+        } catch (err) {
+          error.textContent = err.message;
+          error.hidden = false;
+        } finally {
+          if (form.isConnected) bGuardar.disabled = false;
+        }
+      };
+      setTimeout(() => { form.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); inpValor.focus(); }, 0);
+      li.appendChild(form);
+      return li;
     }
 
     // ---------- Precios y parámetros (lo que antes se cambiaba en el Excel) ----------
@@ -1780,8 +2225,10 @@
       const main = document.getElementById('main');
       main.innerHTML = '';
       main.appendChild(document.getElementById('tplLiqParametros').content.cloneNode(true));
-      state.liqp.editando = '';
-      state.liqp.prefijo = {};
+      const pendiente = state.liqp.pendiente || {};
+      state.liqp.pendiente = null;
+      state.liqp.editando = pendiente.editando || '';
+      state.liqp.prefijo = pendiente.prefijo || {};
       if (!state.liqp.mesFijos) state.liqp.mesFijos = state.liq.mes;
       cargarLiqParametros();
     }
@@ -1860,16 +2307,20 @@
     }
 
     // Una fila: el dato y «Cambiar»; si es la que se está editando, el formulario en su lugar
-    function lpFila(cont, clave, pintar, editor) {
-      if (state.liqp.editando === clave) { cont.appendChild(editor()); return; }
+    function lpFila(cont, clave, pintar, editor, cerrado) {
+      if (state.liqp.editando === clave && !cerrado) { cont.appendChild(editor()); return; }
       const fila = nodo('div', 'flex items-center justify-between gap-3 py-2 border-t border-slate-100');
       const izq = nodo('div', 'min-w-0 text-sm');
       pintar(izq);
       fila.appendChild(izq);
-      const btn = nodo('button', 'shrink-0 text-sm font-semibold text-brand-700 underline min-h-[44px] px-2', 'Cambiar');
-      btn.type = 'button';
-      btn.onclick = () => lpEditar(clave);
-      fila.appendChild(btn);
+      if (cerrado) {
+        fila.appendChild(nodo('span', 'shrink-0 text-xs font-semibold text-slate-500 px-2', 'Mes cerrado'));
+      } else {
+        const btn = nodo('button', 'shrink-0 text-sm font-semibold text-brand-700 underline min-h-[44px] px-2', 'Cambiar');
+        btn.type = 'button';
+        btn.onclick = () => lpEditar(clave);
+        fila.appendChild(btn);
+      }
       cont.appendChild(fila);
     }
 
@@ -1987,13 +2438,15 @@
       const textos = {
         valor_hora_produccion: ['Hora de producción', 'Base del precio por unidad: este valor ÷ las unidades por hora del grupo. Si lo cambiás, cambian todos los precios.'],
         valor_hora_trabajo: ['Hora de trabajo', 'Lo que se paga por cada hora de corte, control, ADM/calidad, etc.'],
+        horas_minimas_por_dia: ['Horas mínimas por día', 'Para calcular las horas faltantes del mes. Es informativo: no cambia lo que se paga.'],
       };
+      const enPesos = p => p.clave !== 'horas_minimas_por_dia';
       for (const p of D.tablas.parametros) {
         const [titulo, ayuda] = textos[p.clave] || [p.descripcion || p.clave, ''];
         lpFila(body, 'parametros:' + p.fila, izq => {
-          izq.appendChild(nodo('div', 'font-semibold text-slate-900', titulo + ': ' + pesos(p.valor)));
+          izq.appendChild(nodo('div', 'font-semibold text-slate-900', titulo + ': ' + (enPesos(p) ? pesos(p.valor) : n2(p.valor) + ' h')));
           if (ayuda) izq.appendChild(nodo('div', 'text-xs text-slate-500 mt-0.5', ayuda));
-        }, () => lpEditor(titulo, [{ k: 'valor', label: 'Valor en pesos', tipo: 'numero', ayuda }], p, lpGuardar('parametros', p)));
+        }, () => lpEditor(titulo, [{ k: 'valor', label: enPesos(p) ? 'Valor en pesos' : 'Horas', tipo: 'numero', ayuda }], p, lpGuardar('parametros', p)));
       }
     }
 
@@ -2110,6 +2563,8 @@
       lab.appendChild(inpMes);
       body.appendChild(lab);
 
+      const cerrado = (D.mesesCerrados || []).includes(mes);
+      if (cerrado) body.appendChild(nodo('p', 'pb-2 text-sm font-semibold text-slate-600', mesTitulo(mes) + ' está cerrado: estos montos quedaron guardados con el cierre.'));
       const delMes = D.tablas.montosFijos.filter(m => m.mes === mes).sort((a, b) => porNombre(a.persona, b.persona));
       if (!delMes.length) body.appendChild(nodo('p', 'py-2 text-sm text-slate-500', 'No hay montos fijos cargados en ' + nombreMes(mes) + '.'));
       for (const m of delMes) {
@@ -2117,7 +2572,7 @@
           izq.appendChild(nodo('div', 'font-medium text-slate-900 break-words', m.persona));
           izq.appendChild(nodo('div', 'text-xs text-slate-500', pesos(m.monto)));
         }, () => lpEditor(m.persona + ' · ' + mesTitulo(m.mes), camposFijo(D), m, lpGuardar('montosFijos', m),
-          lpBorrar('montosFijos', m, '¿Borrar el monto fijo de ' + m.persona + ' en ' + nombreMes(m.mes) + '?')));
+          lpBorrar('montosFijos', m, '¿Borrar el monto fijo de ' + m.persona + ' en ' + nombreMes(m.mes) + '?')), cerrado);
       }
       if (delMes.length) {
         body.appendChild(nodo('p', 'pt-2 border-t border-slate-100 text-sm font-semibold text-slate-900 text-right',
@@ -2128,7 +2583,7 @@
       const ant = mesAnterior(mes);
       const yaTienen = new Set(delMes.map(m => m.persona.toLowerCase()));
       const copiables = D.tablas.montosFijos.filter(m => m.mes === ant && !yaTienen.has(m.persona.toLowerCase()));
-      if (copiables.length) {
+      if (copiables.length && !cerrado) {
         const b = nodo('button', 'mt-2 w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-sm disabled:opacity-60',
           'Copiar los de ' + nombreMes(ant) + ' (' + copiables.length + ')');
         b.type = 'button';
@@ -2147,8 +2602,10 @@
         };
         body.append(b, err);
       }
-      lpAgregar(body, 'montosFijos:nuevo', 'Agregar monto fijo',
-        () => lpEditor('Monto fijo nuevo', camposFijo(D), Object.assign({ mes }, state.liqp.prefijo), lpGuardar('montosFijos', null)));
+      if (!cerrado) {
+        lpAgregar(body, 'montosFijos:nuevo', 'Agregar monto fijo',
+          () => lpEditor('Monto fijo nuevo', camposFijo(D), Object.assign({ mes }, state.liqp.prefijo), lpGuardar('montosFijos', null)));
+      }
 
       const otros = [...new Set(D.tablas.montosFijos.map(m => m.mes))].filter(x => x !== mes).sort().reverse();
       if (otros.length) {
@@ -2170,13 +2627,15 @@
 
     function lpDiasLaborales(body, D) {
       body.appendChild(nodo('p', 'text-xs text-slate-500 pb-1', 'Se usan para calcular inasistencias y horas faltantes. No cambian lo que se paga.'));
-      lpAgregar(body, 'diasLaborales:nuevo', 'Agregar mes', () => lpEditor('Mes nuevo', camposDias(), { mes: state.liq.mes }, lpGuardar('diasLaborales', null)));
+      lpAgregar(body, 'diasLaborales:nuevo', 'Agregar mes',
+        () => lpEditor('Mes nuevo', camposDias(), Object.assign({ mes: state.liq.mes }, state.liqp.prefijo), lpGuardar('diasLaborales', null)));
+      const cerrados = D.mesesCerrados || [];
       for (const d of D.tablas.diasLaborales.slice().sort((a, b) => b.mes.localeCompare(a.mes))) {
         lpFila(body, 'diasLaborales:' + d.fila, izq => {
           izq.appendChild(nodo('span', 'font-medium text-slate-900', mesTitulo(d.mes) + ': '));
           izq.appendChild(document.createTextNode(d.dias + ' días'));
         }, () => lpEditor(mesTitulo(d.mes), camposDias(), d, lpGuardar('diasLaborales', d),
-          lpBorrar('diasLaborales', d, '¿Borrar los días laborales de ' + nombreMes(d.mes) + '?')));
+          lpBorrar('diasLaborales', d, '¿Borrar los días laborales de ' + nombreMes(d.mes) + '?')), cerrados.includes(d.mes));
       }
     }
 
