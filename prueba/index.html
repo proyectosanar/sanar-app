@@ -407,7 +407,53 @@
           <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
         </div>
       </a>
+
+      <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/cruce">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-2xl shrink-0">🔎</div>
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-slate-900">Cruce con lo declarado</h2>
+            <p class="text-sm text-slate-600 mt-1">Lo que cargó cada colaboradora comparado con lo que se contó.</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </div>
+      </a>
     </section>
+  </template>
+
+  <!-- CRUCE: LO DECLARADO POR CADA COLABORADORA VS LO CONTADO -->
+  <template id="tplCruce">
+    <div class="fade-in space-y-4">
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="crMes">Mes</label>
+            <select id="crMes" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="crBuscar">Buscar</label>
+            <input id="crBuscar" type="search" placeholder="apellido o nombre" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+        </div>
+        <div role="group" aria-label="Qué mostrar" class="grid grid-cols-2 gap-2">
+          <button type="button" id="crVerRevisar" class="rounded-xl py-3 text-sm font-semibold">Para revisar</button>
+          <button type="button" id="crVerTodo" class="rounded-xl py-3 text-sm font-semibold">Todo</button>
+        </div>
+        <p class="text-xs text-slate-500">Para pagar vale lo que declaró cada colaboradora. Cuando no coincide con lo contado, elegí en cada caso «Usar lo contado» (queda como una corrección, con su motivo) o «Dejar lo declarado».</p>
+      </section>
+
+      <div id="crAviso" role="status" class="fixed bottom-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl text-white p-3 text-sm font-semibold shadow-lg" hidden></div>
+
+      <section id="crResumen" class="grid grid-cols-2 sm:grid-cols-4 gap-2" hidden></section>
+      <p id="crSinConteo" class="text-xs text-slate-500" hidden></p>
+
+      <div id="crEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="crLista" class="space-y-3"></section>
+    </div>
   </template>
 
   <!-- CONTEOS DEL DÍA -->
@@ -699,6 +745,8 @@
       liq: { mes: localStorage.getItem('sanar.liqMes') || mesActualISO(), buscar: '', datos: null, datosMes: '', estado: null, confirmarCierre: false },
       // Detalle de una colaboradora: qué cantidad se está corrigiendo
       liqd: { persona: '', datos: null, editando: '' },
+      // Cruce declarado vs contado: qué producto se está resolviendo («usar» o «dejar») y los filtros
+      cruce: { mes: '', datos: null, soloRevisar: true, buscar: '', editando: null },
       // Precios y parámetros: qué secciones están abiertas, qué fila se está editando y los filtros
       // (pendiente: formulario a abrir al llegar desde un aviso de la liquidación)
       liqp: { datos: null, abiertas: new Set(['valores']), editando: '', prefijo: {}, pendiente: null, buscarProd: '', soloSinGrupo: false, buscarCol: '', mesFijos: '' },
@@ -764,6 +812,7 @@
       if (hash.startsWith('#/resetear-pin')) return mountResetear();
       if (hash.startsWith('#/conteos')) return mountConteos();
       if (hash.startsWith('#/bolsas')) return mountBolsas();
+      if (hash.startsWith('#/cruce')) return mountCruce();
       if (hash.startsWith('#/liquidacion-resumen')) return mountLiqResumen();
       if (hash.startsWith('#/liquidacion-parametros')) return mountLiqParametros();
       if (hash.startsWith('#/liquidacion-detalle/')) return mountLiqDetalle(decodeURIComponent(hash.slice('#/liquidacion-detalle/'.length)));
@@ -1644,7 +1693,8 @@
 
     function cantidadAvisosLiq(L) {
       const av = L.avisos;
-      return av.productosSinPrecio.length + av.productosSinCatalogo.length + av.personasNoListadas.length + (L.diasLaborales == null ? 1 : 0);
+      return av.productosSinPrecio.length + av.productosSinCatalogo.length + av.personasNoListadas.length + (L.diasLaborales == null ? 1 : 0) +
+        (av.diferenciasConteo || 0);
     }
 
     function renderLiquidacion() {
@@ -1881,6 +1931,11 @@
           div.appendChild(item);
         }
         cont.appendChild(div);
+      }
+      if (av.diferenciasConteo) {
+        bloque('Lo declarado no coincide con lo contado:', [av.diferenciasConteo + (av.diferenciasConteo === 1 ? ' producto' : ' productos') +
+          ' de alguna colaboradora en algún día. Para pagar vale lo declarado hasta que lo revises.'],
+          ['Revisar el cruce', () => { state.cruce.mes = state.liq.mes; state.cruce.soloRevisar = true; location.hash = '#/cruce'; }]);
       }
       if (L.diasLaborales == null) {
         bloque('Faltan los días laborales del mes:', ['Sin ese dato no se calculan inasistencias ni horas faltantes.'],
@@ -2200,6 +2255,224 @@
       setTimeout(() => { form.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); inpValor.focus(); }, 0);
       li.appendChild(form);
       return li;
+    }
+
+    // ---------- Cruce: lo declarado por cada colaboradora vs lo contado ----------
+    const CRUCE_TEXTO = {
+      coincide: 'Coincide',
+      diferencia: 'No coincide',
+      sinContar: 'No se contó',
+      sinDeclarar: 'No lo declaró',
+    };
+    const aRevisarCruce = p => p.estado !== 'coincide' && !p.revisado;
+
+    function mountCruce() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!puedeContar()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Cruce con lo declarado' });
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplCruce').content.cloneNode(true));
+
+      if (!state.cruce.mes) state.cruce.mes = state.liq.mes || mesActualISO();
+      const sel = document.getElementById('crMes');
+      const hoy = new Date();
+      for (let i = 0; i < 12; i++) {
+        const iso = formatFechaISO(new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)).slice(0, 7);
+        const o = nodo('option', null, nombreMes(iso));
+        o.value = iso;
+        sel.appendChild(o);
+      }
+      sel.value = state.cruce.mes;
+      if (sel.value !== state.cruce.mes) state.cruce.mes = sel.value;
+      sel.addEventListener('change', () => { state.cruce.mes = sel.value; state.cruce.editando = null; cargarCruce(); });
+      const buscar = document.getElementById('crBuscar');
+      buscar.value = state.cruce.buscar;
+      buscar.addEventListener('input', () => { state.cruce.buscar = buscar.value.trim().toLowerCase(); renderCruce(); });
+      document.getElementById('crVerRevisar').onclick = () => { state.cruce.soloRevisar = true; renderCruce(); };
+      document.getElementById('crVerTodo').onclick = () => { state.cruce.soloRevisar = false; renderCruce(); };
+      state.cruce.editando = null;
+      cargarCruce();
+    }
+
+    async function cargarCruce() {
+      if (!state.cruce.datos || state.cruce.datos.mes !== state.cruce.mes) {
+        document.getElementById('crLista').innerHTML = '';
+        document.getElementById('crResumen').hidden = true;
+        estadoEn('crEstado', 'Comparando lo declarado con lo contado…', true);
+      }
+      try {
+        state.cruce.datos = await api({ action: 'cruce', mes: state.cruce.mes });
+        document.getElementById('crEstado').hidden = true;
+        renderCruce();
+      } catch (err) {
+        estadoEn('crEstado', err.message);
+      }
+    }
+
+    function renderCruce() {
+      const lista = document.getElementById('crLista');
+      const D = state.cruce.datos;
+      if (!lista || !D) return;
+      for (const [id, activo] of [['crVerRevisar', state.cruce.soloRevisar], ['crVerTodo', !state.cruce.soloRevisar]]) {
+        const b = document.getElementById(id);
+        b.setAttribute('aria-pressed', String(activo));
+        b.className = 'rounded-xl py-3 text-sm font-semibold ' + (activo ? 'bg-brand-700 text-white' : 'bg-white border border-slate-300 text-slate-700');
+      }
+
+      const R = D.resumen;
+      const res = document.getElementById('crResumen');
+      res.innerHTML = '';
+      const dato = (titulo, valor, sub, alerta) => {
+        const d = nodo('div', 'rounded-2xl border p-3 text-center ' + (alerta ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200'));
+        d.appendChild(nodo('div', 'text-xs uppercase tracking-wide text-slate-500', titulo));
+        d.appendChild(nodo('div', 'text-lg font-bold text-slate-900', valor));
+        if (sub) d.appendChild(nodo('div', 'text-xs text-slate-500', sub));
+        res.appendChild(d);
+      };
+      dato('Días contados', num(R.diasConConteo), 'colaboradora × día');
+      dato('Coinciden', num(R.coinciden), 'productos');
+      dato('Para revisar', num(R.aRevisar), R.revisados ? num(R.revisados) + ' ya revisados' : '', R.aRevisar > 0);
+      dato('Unidades', num(R.unidadesContadas) + ' / ' + num(R.unidadesDeclaradas), 'contadas / declaradas');
+      res.hidden = false;
+      const sinConteo = document.getElementById('crSinConteo');
+      sinConteo.textContent = R.diasSinConteo
+        ? R.diasSinConteo + ' días con producción declarada todavía no tienen conteo: no se comparan.'
+        : '';
+      sinConteo.hidden = !R.diasSinConteo;
+
+      lista.innerHTML = '';
+      if (D.cerrado) lista.appendChild(nodo('p', 'rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-900',
+        mesTitulo(D.mes) + ' está cerrado: el cruce se puede ver, pero ya no se resuelve.'));
+      const q = state.cruce.buscar;
+      const dias = D.dias.filter(d => (!q || d.persona.toLowerCase().includes(q)) && (!state.cruce.soloRevisar || d.productos.some(aRevisarCruce)));
+      if (!dias.length) {
+        lista.appendChild(nodo('p', 'text-center py-10 text-slate-500', !D.dias.length
+          ? 'Todavía no hay conteos de ' + nombreMes(D.mes) + ' para comparar.'
+          : state.cruce.soloRevisar ? 'No queda nada para revisar. ' + (q ? '' : 'Todo lo contado coincide o ya está revisado.') : 'No hay colaboradoras que coincidan con la búsqueda.'));
+        return;
+      }
+      for (const d of dias) lista.appendChild(tarjetaCruce(d, D));
+    }
+
+    function tarjetaCruce(d, D) {
+      const card = nodo('article', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
+      const head = nodo('header', 'flex items-start justify-between gap-3');
+      const tit = nodo('div', 'min-w-0');
+      tit.appendChild(nodo('h2', 'font-semibold text-slate-900 break-words', d.persona));
+      tit.appendChild(nodo('p', 'text-sm text-slate-600', formatFechaLegible(d.fecha) + ' · ' + d.canastos + (d.canastos === 1 ? ' canasto contado' : ' canastos contados')));
+      head.appendChild(tit);
+      const n = d.productos.filter(aRevisarCruce).length;
+      head.appendChild(nodo('span', 'shrink-0 rounded-full px-3 py-1 text-xs font-semibold ' + (n ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'),
+        n ? n + ' para revisar' : 'Todo bien'));
+      card.appendChild(head);
+      if (!d.declaro) card.appendChild(nodo('p', 'mt-2 text-sm font-semibold text-amber-800', 'No cargó su producción ese día en el formulario.'));
+      const ul = nodo('ul', 'mt-2 border-t border-slate-100 divide-y divide-slate-100');
+      for (const p of d.productos) ul.appendChild(lineaCruce(d, p, D));
+      card.appendChild(ul);
+      return card;
+    }
+
+    function lineaCruce(d, p, D) {
+      const li = nodo('li', 'py-2 text-sm');
+      const fila = nodo('div', 'flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1');
+      fila.appendChild(nodo('span', 'min-w-0 flex-1 break-words text-slate-800', p.producto));
+      const dif = p.contado - p.declarado;
+      const nums = nodo('span', 'shrink-0 text-slate-700');
+      nums.textContent = 'Declaró ' + num(p.declarado) + ' · contó ' + num(p.contado);
+      fila.appendChild(nums);
+      li.appendChild(fila);
+
+      const pie = nodo('div', 'mt-1 flex flex-wrap items-center gap-x-3 gap-y-1');
+      const colorEstado = p.estado === 'coincide' ? 'text-emerald-700' : p.revisado ? 'text-slate-600' : 'text-amber-800';
+      let txt = CRUCE_TEXTO[p.estado] + (dif && p.declarado && p.contado ? ' (' + (dif > 0 ? '+' : '') + num(dif) + ')' : '');
+      if (p.estado === 'coincide' && p.corregido) txt += ' · corregido según el conteo';
+      pie.appendChild(nodo('span', 'text-xs font-semibold ' + colorEstado, txt));
+      li.appendChild(pie);
+
+      if (p.revisado) {
+        li.appendChild(nodo('p', 'text-xs text-slate-600 mt-0.5 break-words', 'Revisado: queda lo declarado · ' + p.revisado.motivo + ' (' + p.revisado.quien + ')'));
+      } else if (p.estado === 'sinDeclarar') {
+        li.appendChild(nodo('p', 'text-xs text-slate-600 mt-0.5', 'Fijate si lo cargó con otra fecha o como otro producto: ahí lo podés corregir desde la liquidación.'));
+      }
+
+      const puede = D.puedeAjustar && !D.cerrado && p.estado !== 'coincide';
+      if (!puede) return li;
+      const ed = state.cruce.editando;
+      if (ed && ed.persona === d.persona && ed.fecha === d.fecha && ed.producto === p.producto) {
+        li.appendChild(editorCruce(d, p, ed.accion));
+        return li;
+      }
+      const acciones = nodo('div', 'flex flex-wrap gap-x-4');
+      const abrir = accion => () => { state.cruce.editando = { persona: d.persona, fecha: d.fecha, producto: p.producto, accion }; renderCruce(); };
+      if (p.revisado) {
+        const b = botonChico('Deshacer la revisión', async () => {
+          b.disabled = true;
+          await accionCruce({ action: 'cruce_deshacer', persona: d.persona, fecha: d.fecha, producto: p.producto }, b);
+        }, 'text-slate-600');
+        acciones.appendChild(b);
+      } else {
+        if (p.declarado > 0) acciones.appendChild(botonChico('Usar lo contado (' + num(p.contado) + ')', abrir('usar')));
+        acciones.appendChild(botonChico(p.declarado > 0 ? 'Dejar lo declarado (' + num(p.declarado) + ')' : 'Dejar así', abrir('dejar'), 'text-slate-700'));
+      }
+      li.appendChild(acciones);
+      return li;
+    }
+
+    function editorCruce(d, p, accion) {
+      const usar = accion === 'usar';
+      const form = nodo('form', 'mt-2 rounded-xl border border-brand-200 bg-brand-50 p-3 space-y-2');
+      form.appendChild(nodo('p', 'text-sm text-slate-800', usar
+        ? 'Se va a pagar ' + num(p.contado) + ' (lo contado) en vez de ' + num(p.declarado) + '. Queda como una corrección del registro, con el valor anterior.'
+        : 'Se va a pagar ' + num(p.declarado) + ' (lo declarado) y la diferencia queda marcada como revisada.'));
+      const lab = nodo('label', 'block');
+      lab.appendChild(nodo('span', 'text-xs font-medium text-slate-500 uppercase tracking-wide', 'Motivo'));
+      const inp = nodo('input', LP_INPUT);
+      inp.type = 'text';
+      inp.value = usar ? 'Según el conteo de la contadora' : '';
+      inp.placeholder = usar ? '' : 'Ej.: ese producto no pasa por la contadora';
+      lab.appendChild(inp);
+      form.appendChild(lab);
+      const error = nodo('p', 'text-sm font-semibold text-red-700');
+      error.hidden = true;
+      form.appendChild(error);
+      const botones = nodo('div', 'flex flex-wrap gap-2');
+      const bOk = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60',
+        usar ? 'Pagar lo contado' : 'Dejar lo declarado');
+      bOk.type = 'submit';
+      const bNo = nodo('button', 'rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold px-5 py-3 text-sm', 'Cancelar');
+      bNo.type = 'button';
+      bNo.onclick = () => { state.cruce.editando = null; renderCruce(); };
+      botones.append(bOk, bNo);
+      form.appendChild(botones);
+      form.onsubmit = async ev => {
+        ev.preventDefault();
+        error.hidden = true;
+        bOk.disabled = true;
+        const params = { action: usar ? 'cruce_usar_contado' : 'cruce_dejar_declarado', persona: d.persona, fecha: d.fecha, producto: p.producto, motivo: inp.value.trim() };
+        const r = await accionCruce(params, bOk);
+        if (r && r.error) { error.textContent = r.error; error.hidden = false; }
+      };
+      setTimeout(() => { form.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); inp.focus(); }, 0);
+      return form;
+    }
+
+    // Resolver una diferencia y volver a comparar; la liquidación del mes se recalcula al volver a ella
+    async function accionCruce(params, boton) {
+      try {
+        const r = await api(params);
+        state.cruce.editando = null;
+        state.liq.datos = null;
+        await cargarCruce();
+        avisoFlotante('crAviso', r.aviso);
+        return r;
+      } catch (err) {
+        if (boton && boton.isConnected) boton.disabled = false;
+        if (!state.cruce.editando) avisoFlotante('crAviso', err.message, true);
+        return { error: err.message };
+      }
     }
 
     // ---------- Precios y parámetros (lo que antes se cambiaba en el Excel) ----------
