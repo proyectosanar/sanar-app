@@ -244,12 +244,17 @@
     </div>
   </template>
 
-  <!-- USUARIOS NUEVOS (supervisora / admin) -->
+  <!-- USUARIOS (supervisora / admin): altas y perfiles -->
   <template id="tplUsuarios">
     <div class="fade-in space-y-4">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-5">
-        <h1 class="text-xl font-bold text-slate-900">Usuarios nuevos</h1>
-        <p class="text-sm text-slate-600 mt-1">Primero agregá a la colaboradora en el formulario de producción de Google. Apenas la guardes, aparece acá: cargás su DNI y queda creado su usuario. Entra con los últimos 4 números del DNI y la app le pide elegir su PIN.</p>
+        <h1 class="text-xl font-bold text-slate-900">Usuarios</h1>
+        <p class="text-sm text-slate-600 mt-1">Una colaboradora nueva se agrega primero en el formulario de producción de Google: apenas la guardes, aparece acá. Tildá su perfil, cargá su DNI y queda creado su usuario. Entra con los últimos 4 números del DNI y la app le pide elegir su PIN.</p>
+        <ul class="text-sm text-slate-600 mt-3 space-y-1">
+          <li><b class="text-slate-800">Colaboradora:</b> carga y consulta su producción.</li>
+          <li><b class="text-slate-800">Contadora:</b> carga los conteos y arma las bolsas para esterilizar.</li>
+          <li><b class="text-slate-800">Las dos:</b> ve las dos cosas.</li>
+        </ul>
       </div>
 
       <div id="uAviso" role="status" class="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800" hidden></div>
@@ -264,25 +269,46 @@
         <div id="uPendientes" class="space-y-3"></div>
       </section>
 
-      <section id="uSupWrap" class="bg-white rounded-2xl border border-slate-200 shadow-card p-5" hidden>
-        <h2 class="text-base font-semibold text-slate-900">Usuario de supervisora</h2>
-        <p class="text-sm text-slate-600 mt-1">Solo la administradora. Poné el PIN inicial de las supervisoras: al entrar, la app le pide elegir el suyo.</p>
-        <form id="uSupForm" class="mt-4 space-y-3" autocomplete="off" novalidate>
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-5">
+        <h2 class="text-base font-semibold text-slate-900">Alguien que no está en el formulario</h2>
+        <p class="text-sm text-slate-600 mt-1">Para una contadora que no produce<span id="uFueraSup" hidden> o una supervisora</span>.</p>
+        <form id="uFueraForm" class="mt-4 space-y-3" autocomplete="off" novalidate>
           <div>
-            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uSupNombre">Apellido, Nombre</label>
-            <input id="uSupNombre" type="text" autocomplete="off" placeholder="Apellido, Nombre" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uFueraNombre">Apellido, Nombre</label>
+            <input id="uFueraNombre" type="text" autocomplete="off" placeholder="Apellido, Nombre" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
           </div>
+          <fieldset id="uFueraPerfil" hidden>
+            <legend class="text-xs font-medium text-slate-500 uppercase tracking-wide">Perfil</legend>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <label class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer"><input type="radio" name="uFueraRol" value="contadora" class="accent-brand-700" checked /> Contadora</label>
+              <label class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer"><input type="radio" name="uFueraRol" value="supervisora" class="accent-brand-700" /> Supervisora</label>
+            </div>
+          </fieldset>
           <div>
-            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uSupDni">DNI (opcional)</label>
-            <input id="uSupDni" type="text" inputmode="numeric" autocomplete="off" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
-            <p class="text-xs text-slate-500 mt-1">Con el DNI cargado, si se olvida el PIN se le puede resetear desde la app.</p>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uFueraDni">DNI</label>
+            <input id="uFueraDni" type="text" inputmode="numeric" autocomplete="off" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+            <p id="uFueraDniAyuda" class="text-xs text-slate-500 mt-1">Entra con los últimos 4 números del DNI y la app le pide elegir su PIN.</p>
           </div>
+          <div id="uFueraPinWrap" hidden>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uFueraPin">PIN inicial de supervisora (6 números)</label>
+            <input id="uFueraPin" type="text" inputmode="numeric" maxlength="6" autocomplete="off" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+          <p id="uFueraError" class="text-sm text-red-600" hidden></p>
+          <button type="submit" id="uFueraBtn" class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50">Crear usuario</button>
+        </form>
+      </section>
+
+      <section id="uPerfilWrap" class="bg-white rounded-2xl border border-slate-200 shadow-card p-5" hidden>
+        <h2 class="text-base font-semibold text-slate-900">Cambiar el perfil de alguien</h2>
+        <p class="text-sm text-slate-600 mt-1">Por ejemplo, si una colaboradora empieza también a contar, o si una contadora deja de producir.</p>
+        <form id="uPerfilForm" class="mt-4 space-y-3" novalidate>
           <div>
-            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uSupPin">PIN inicial (6 números)</label>
-            <input id="uSupPin" type="text" inputmode="numeric" maxlength="6" autocomplete="off" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uPerfilPersona">Persona</label>
+            <select id="uPerfilPersona" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></select>
           </div>
-          <p id="uSupError" class="text-sm text-red-600" hidden></p>
-          <button type="submit" id="uSupBtn" class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50">Crear usuario de supervisora</button>
+          <div id="uPerfilTildes"></div>
+          <p id="uPerfilError" class="text-sm text-red-600" hidden></p>
+          <button type="submit" id="uPerfilBtn" class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50">Guardar perfil</button>
         </form>
       </section>
     </div>
@@ -307,7 +333,7 @@
           </div>
         </a>
 
-        <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/consulta">
+        <a id="linkConsulta" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/consulta">
           <div class="flex items-start gap-4">
             <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center text-2xl shrink-0">📋</div>
             <div class="min-w-0">
@@ -328,7 +354,7 @@
         <a id="linkUsuarios" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-4" href="#/usuarios" hidden>
           <div class="flex items-center gap-3 text-slate-600">
             <div class="w-9 h-9 rounded-xl bg-slate-100 grid place-items-center text-base shrink-0">👤</div>
-            <div class="text-sm">Usuarios nuevos</div>
+            <div class="text-sm">Usuarios: altas y perfiles</div>
           </div>
         </a>
 
@@ -1040,6 +1066,12 @@
         });
       }
 
+      // Contadora (permiso de conteo sin ser supervisora/admin): solo lo del conteo, nada de producción
+      if (soloConteo()) {
+        node.getElementById('linkCargar').hidden = true;
+        node.getElementById('linkConsulta').hidden = true;
+      }
+
       // Contadora: el bloque de conteo va primero. Supervisora/admin: después de la consulta.
       if (puedeContar()) {
         const bloque = document.getElementById('tplHomeConteo').content.cloneNode(true);
@@ -1126,8 +1158,9 @@
     }
 
     // =====================================================================
-    // USUARIOS NUEVOS (supervisora / admin; el backend vuelve a validar el rol)
-    // El nombre sale del formulario de producción: acá no se escribe, se elige.
+    // USUARIOS (supervisora / admin; el backend vuelve a validar el rol)
+    // Perfiles: colaboradora (producción), contadora (conteo) o las dos.
+    // El nombre de quien produce sale del formulario de producción: acá no se escribe, se elige.
     // =====================================================================
     const U_INPUT = 'mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500';
     function mountUsuarios() {
@@ -1135,11 +1168,15 @@
       if (!esGestion()) { location.hash = '#/'; return mountHome(); }
 
       showHeader(true);
-      setHeader({ back: true, subtitle: 'Usuarios nuevos' });
+      setHeader({ back: true, subtitle: 'Usuarios' });
       const main = document.getElementById('main');
       main.innerHTML = '';
       main.appendChild(document.getElementById('tplUsuarios').content.cloneNode(true));
-      document.getElementById('uSupForm').onsubmit = crearSupervisora;
+      document.getElementById('uFueraForm').onsubmit = crearFuera;
+      document.getElementById('uPerfilForm').onsubmit = guardarPerfil;
+      document.querySelectorAll('input[name="uFueraRol"]').forEach(r => (r.onchange = ajustarFuera));
+      document.getElementById('uPerfilPersona').onchange = mostrarPerfilElegido;
+      state.usuarios = [];
 
       estadoEn('uEstado', 'Leyendo el formulario de producción…', true);
       api({ action: 'usuarios_pendientes' }).then(renderUsuarios).catch(e => estadoEn('uEstado', e.message));
@@ -1154,7 +1191,49 @@
       document.getElementById('uPendientesWrap').hidden = !pendientes.length;
       if (pendientes.length) document.getElementById('uEstado').hidden = true;
       else estadoEn('uEstado', 'Todas las colaboradoras del formulario ya tienen usuario.');
-      document.getElementById('uSupWrap').hidden = !data.puedeCrearSupervisora;
+
+      // Solo el admin crea supervisoras
+      document.getElementById('uFueraSup').hidden = !data.puedeCrearSupervisora;
+      document.getElementById('uFueraPerfil').hidden = !data.puedeCrearSupervisora;
+      if (!data.puedeCrearSupervisora) document.querySelector('input[name="uFueraRol"][value="contadora"]').checked = true;
+      ajustarFuera();
+
+      // Cambio de perfil: quienes ya tienen usuario (no supervisoras)
+      state.usuarios = data.usuarios || [];
+      const sel = document.getElementById('uPerfilPersona');
+      const elegida = sel.value;
+      sel.innerHTML = '';
+      sel.appendChild(nodo('option', '', 'Elegí la persona…')).value = '';
+      state.usuarios.forEach(u => {
+        const o = nodo('option', '', u.persona + ' · ' + textoPerfil(u));
+        o.value = u.persona;
+        sel.appendChild(o);
+      });
+      if (state.usuarios.some(u => u.persona === elegida)) sel.value = elegida;
+      document.getElementById('uPerfilWrap').hidden = !state.usuarios.length;
+      mostrarPerfilElegido();
+    }
+
+    const textoPerfil = p => (p.colaboradora && p.contadora ? 'colaboradora y contadora' : p.contadora ? 'contadora' : 'colaboradora');
+
+    // Dos casillas grandes: Colaboradora / Contadora
+    function tildesPerfil(colaboradora, contadora) {
+      const wrap = nodo('fieldset', '');
+      wrap.appendChild(nodo('legend', 'text-xs font-medium text-slate-500 uppercase tracking-wide', 'Perfil (podés tildar las dos)'));
+      const fila = nodo('div', 'mt-2 flex flex-wrap gap-2');
+      const casilla = (texto, valor) => {
+        const l = nodo('label', 'inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer');
+        const c = nodo('input', 'w-4 h-4 accent-brand-700');
+        c.type = 'checkbox';
+        c.checked = valor;
+        l.append(c, document.createTextNode(texto));
+        fila.appendChild(l);
+        return c;
+      };
+      const colab = casilla('Colaboradora', colaboradora);
+      const cont = casilla('Contadora', contadora);
+      wrap.appendChild(fila);
+      return { wrap, colab, cont };
     }
 
     function avisoUsuario(msg) {
@@ -1162,6 +1241,12 @@
       a.textContent = msg;
       a.hidden = false;
       a.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    function textoFicha(ficha) {
+      return ficha === 'creada' ? ' Su ficha con el DNI quedó en «Precios y parámetros».'
+        : ficha === 'completada' ? ' Se completó su DNI en «Precios y parámetros».'
+        : (ficha && ficha !== 'ya estaba' ? ' ' + ficha : '');
     }
 
     function tarjetaUsuarioNuevo(p) {
@@ -1176,6 +1261,7 @@
       const form = nodo('form', 'mt-3 space-y-3');
       form.hidden = true;
       form.noValidate = true;
+      const tildes = tildesPerfil(true, false);
       const id = 'dni-' + Math.random().toString(36).slice(2);
       const label = nodo('label', 'text-xs font-medium text-slate-500 uppercase tracking-wide', 'DNI');
       label.htmlFor = id;
@@ -1192,7 +1278,7 @@
       const crear = nodo('button', 'flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-sm disabled:opacity-50', 'Crear usuario');
       crear.type = 'submit';
       botones.append(cancelar, crear);
-      form.append(campo, err, botones);
+      form.append(tildes.wrap, campo, err, botones);
       card.append(abrir, form);
 
       abrir.onclick = () => { abrir.hidden = true; form.hidden = false; inp.focus(); };
@@ -1200,20 +1286,20 @@
       form.onsubmit = async e => {
         e.preventDefault();
         err.hidden = true;
+        const falla = msg => { err.textContent = msg; err.hidden = false; };
+        if (!tildes.colab.checked && !tildes.cont.checked) return falla('Tildá si es colaboradora, contadora o las dos.');
         const dni = inp.value.replace(/\D/g, '');
-        if (dni.length < 7 || dni.length > 9) { err.textContent = 'Escribí el DNI completo (7 a 9 números).'; err.hidden = false; return; }
+        if (dni.length < 7 || dni.length > 9) return falla('Escribí el DNI completo (7 a 9 números).');
         crear.disabled = true;
         crear.textContent = 'Creando…';
         try {
-          const data = await api({ action: 'crear_usuario', rol: 'colaboradora', persona: p.persona, dni });
-          const ficha = data.ficha === 'creada' ? ' Su ficha con el DNI quedó en «Precios y parámetros».'
-            : data.ficha === 'completada' ? ' Se completó su DNI en «Precios y parámetros».'
-            : (data.ficha && data.ficha !== 'ya estaba' ? ' ' + data.ficha : '');
+          const data = await api({ action: 'crear_usuario', persona: p.persona, dni,
+            colaboradora: tildes.colab.checked ? '1' : '', contadora: tildes.cont.checked ? '1' : '' });
           renderUsuarios(data);
-          avisoUsuario('Listo: ' + data.persona + ' ya puede entrar con los últimos 4 números de su DNI.' + ficha);
+          avisoUsuario('Listo: ' + data.persona + ' ya puede entrar como ' + textoPerfil(data.perfil) +
+            ' con los últimos 4 números de su DNI.' + textoFicha(data.ficha));
         } catch (e2) {
-          err.textContent = e2.message;
-          err.hidden = false;
+          falla(e2.message);
           crear.disabled = false;
           crear.textContent = 'Crear usuario';
         }
@@ -1221,25 +1307,40 @@
       return card;
     }
 
-    async function crearSupervisora(e) {
+    // Alguien que no está en el formulario: contadora (o supervisora, solo el admin)
+    function ajustarFuera() {
+      const sup = (document.querySelector('input[name="uFueraRol"]:checked') || {}).value === 'supervisora';
+      document.getElementById('uFueraPinWrap').hidden = !sup;
+      document.getElementById('uFueraDniAyuda').textContent = sup
+        ? 'Opcional. Con el DNI cargado, si se olvida el PIN se le puede resetear desde la app.'
+        : 'Entra con los últimos 4 números del DNI y la app le pide elegir su PIN.';
+    }
+
+    async function crearFuera(e) {
       e.preventDefault();
-      const err = document.getElementById('uSupError');
-      const btn = document.getElementById('uSupBtn');
-      const nombre = document.getElementById('uSupNombre').value.trim();
-      const dni = document.getElementById('uSupDni').value.replace(/\D/g, '');
-      const pinEl = document.getElementById('uSupPin');
+      const err = document.getElementById('uFueraError');
+      const btn = document.getElementById('uFueraBtn');
+      const sup = (document.querySelector('input[name="uFueraRol"]:checked') || {}).value === 'supervisora';
+      const nombre = document.getElementById('uFueraNombre').value.trim();
+      const dni = document.getElementById('uFueraDni').value.replace(/\D/g, '');
+      const pinEl = document.getElementById('uFueraPin');
       const pin = pinEl.value.trim();
       err.hidden = true;
       const falla = msg => { err.textContent = msg; err.hidden = false; };
       if (!/^[^,]+,[^,]+$/.test(nombre)) return falla('Escribí el nombre así: Apellido, Nombre.');
-      if (dni && (dni.length < 7 || dni.length > 9)) return falla('El DNI tiene que tener entre 7 y 9 números.');
-      if (!/^\d{6}$/.test(pin)) return falla('El PIN inicial tiene que tener 6 números.');
+      if (!sup && (dni.length < 7 || dni.length > 9)) return falla('Escribí el DNI completo (7 a 9 números).');
+      if (sup && dni && (dni.length < 7 || dni.length > 9)) return falla('El DNI tiene que tener entre 7 y 9 números.');
+      if (sup && !/^\d{6}$/.test(pin)) return falla('El PIN inicial tiene que tener 6 números.');
       btn.disabled = true;
       try {
-        const data = await api({ action: 'crear_usuario', rol: 'supervisora', persona: nombre, dni, pin });
-        document.getElementById('uSupForm').reset();
+        const data = await api(sup
+          ? { action: 'crear_usuario', rol: 'supervisora', persona: nombre, dni, pin }
+          : { action: 'crear_usuario', persona: nombre, dni, contadora: '1' });
+        document.getElementById('uFueraForm').reset();
         renderUsuarios(data);
-        avisoUsuario('Listo: ' + data.persona + ' ya puede entrar como supervisora con el PIN inicial. La primera vez, la app le pide elegir el suyo.');
+        avisoUsuario(sup
+          ? 'Listo: ' + data.persona + ' ya puede entrar como supervisora con el PIN inicial. La primera vez, la app le pide elegir el suyo.'
+          : 'Listo: ' + data.persona + ' ya puede entrar como contadora con los últimos 4 números de su DNI.' + textoFicha(data.ficha));
       } catch (e2) {
         falla(e2.message);
       } finally {
@@ -1248,11 +1349,49 @@
       }
     }
 
+    // Cambio de perfil de quien ya tiene usuario
+    function mostrarPerfilElegido() {
+      const persona = document.getElementById('uPerfilPersona').value;
+      const u = state.usuarios.find(x => x.persona === persona);
+      const cont = document.getElementById('uPerfilTildes');
+      cont.innerHTML = '';
+      document.getElementById('uPerfilError').hidden = true;
+      document.getElementById('uPerfilBtn').hidden = !u;
+      if (!u) return;
+      state.tildesPerfil = tildesPerfil(u.colaboradora, u.contadora);
+      cont.appendChild(state.tildesPerfil.wrap);
+    }
+
+    async function guardarPerfil(e) {
+      e.preventDefault();
+      const err = document.getElementById('uPerfilError');
+      const btn = document.getElementById('uPerfilBtn');
+      const persona = document.getElementById('uPerfilPersona').value;
+      const t = state.tildesPerfil;
+      err.hidden = true;
+      if (!persona || !t) { err.textContent = 'Elegí la persona.'; err.hidden = false; return; }
+      if (!t.colab.checked && !t.cont.checked) { err.textContent = 'Tildá si es colaboradora, contadora o las dos.'; err.hidden = false; return; }
+      btn.disabled = true;
+      try {
+        const data = await api({ action: 'cambiar_perfil', persona,
+          colaboradora: t.colab.checked ? '1' : '', contadora: t.cont.checked ? '1' : '' });
+        renderUsuarios(data);
+        avisoUsuario('Listo: ' + data.persona + ' ahora es ' + textoPerfil(data.perfil) +
+          '. Lo ve la próxima vez que abra la app.' + (data.aviso ? ' ' + data.aviso : ''));
+      } catch (e2) {
+        err.textContent = e2.message;
+        err.hidden = false;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     // =====================================================================
     // CONSULTA
     // =====================================================================
     function mountConsulta() {
       if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (soloConteo()) { location.hash = '#/'; return mountHome(); }
 
       showHeader(true);
       setHeader({ back: true, subtitle: esGestion() ? 'Registros de las colaboradoras' : 'Mis registros' });
@@ -1435,8 +1574,12 @@
     // =====================================================================
     // CONTEO (contadora / supervisora / admin; el backend vuelve a validar)
     // =====================================================================
+    // Perfil contadora: cuenta canastos y no carga producción. Quien cuenta y produce es colaboradora con permiso de conteo.
+    function soloConteo() {
+      return !!state.session && state.session.rol === 'contadora';
+    }
     function puedeContar() {
-      return esGestion() || (!!state.session && (state.session.permisos || []).includes('conteo'));
+      return esGestion() || soloConteo() || (!!state.session && (state.session.permisos || []).includes('conteo'));
     }
 
     function nodo(tag, clase, texto) {
