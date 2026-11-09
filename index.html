@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f766e" />
+  <meta name="theme-color" content="#241033" />
   <title>SANAR · Mis Registros</title>
+  <link rel="icon" type="image/png" href="isotipo.png" />
+  <link rel="apple-touch-icon" href="isotipo.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,21 +19,26 @@
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          fontFamily: { sans: ['Rubik', 'system-ui', 'sans-serif'] },
           colors: {
+            // Colores del manual de marca SANAR: violeta #6B2D8C (principal), berenjena #241033 (texto y recuadro)
             brand: {
-              50:  '#f0fdfa',
-              100: '#ccfbf1',
-              200: '#99f6e4',
-              500: '#14b8a6',
-              600: '#0d9488',
-              700: '#0f766e',
-              800: '#115e59',
+              50:  '#f5eef9',
+              100: '#ebdcf3',
+              200: '#d6bae6',
+              500: '#8f52b0',
+              600: '#7b3a9e',
+              700: '#6b2d8c',
+              800: '#56236f',
             },
+            berenjena: '#241033',
+            naranja: '#f07e22',
+            verde: '#2e9e6b',
+            slate: { 900: '#241033' },
           },
           boxShadow: {
-            card: '0 4px 20px -2px rgba(15, 118, 110, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
-            'card-hover': '0 10px 30px -6px rgba(15, 118, 110, 0.18), 0 4px 10px -2px rgba(0, 0, 0, 0.05)',
+            card: '0 4px 20px -2px rgba(107, 45, 140, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
+            'card-hover': '0 10px 30px -6px rgba(107, 45, 140, 0.18), 0 4px 10px -2px rgba(0, 0, 0, 0.05)',
           },
         },
       },
@@ -39,13 +46,28 @@
   </script>
 
   <style>
-    html, body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    html, body { font-family: 'Rubik', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    /* Manual de marca: Rubik Medium 500 para el texto corrido, Bold 700 para títulos */
+    body { font-weight: 500; }
     .card-tap { transition: transform .08s ease-out, box-shadow .18s ease-out; }
     .card-tap:active { transform: scale(0.98); }
     @media (hover: hover) { .card-tap:hover { transform: translateY(-2px); } }
     .fade-in { animation: fadeIn .18s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
     [hidden] { display: none !important; }
+    /* Desplegables (conteos y precios): sin el triángulo del navegador, con flecha propia */
+    details.desplegable > summary { list-style: none; }
+    details.desplegable > summary::-webkit-details-marker { display: none; }
+    details.desplegable > summary .flecha { transition: transform .15s; }
+    details.desplegable[open] > summary .flecha { transform: rotate(90deg); }
+    /* Resumen para Melina: al imprimir (o guardar como PDF) sale solo la tabla */
+    @media print {
+      @page { size: A4 landscape; margin: 12mm; }
+      #appHeader, .no-print { display: none !important; }
+      body { background: #fff; }
+      main { max-width: none !important; padding: 0 !important; }
+      #lrHoja { border: 0 !important; box-shadow: none !important; padding: 0 !important; overflow: visible !important; }
+    }
 
     /* Input numérico tipo PIN: digits grandes */
     .pin-input {
@@ -59,11 +81,11 @@
 
 <body class="bg-slate-50 text-slate-800 min-h-screen antialiased">
   <!-- ================== HEADER ================== -->
-  <header id="appHeader" class="bg-white border-b border-slate-200 sticky top-0 z-10" hidden>
+  <header id="appHeader" class="bg-berenjena sticky top-0 z-10" hidden>
     <div class="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
       <button
         id="btnBack"
-        class="flex items-center gap-1 pl-2 pr-3 py-2 -ml-2 rounded-full hover:bg-slate-100 active:bg-slate-200 text-slate-700 font-medium text-sm hidden"
+        class="flex items-center gap-1 pl-2 pr-3 py-2 -ml-2 rounded-full hover:bg-white/10 active:bg-white/20 text-[#e3d3ee] font-medium text-sm hidden"
         aria-label="Volver al inicio"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -73,19 +95,19 @@
       </button>
       <div class="flex items-center gap-2 min-w-0 flex-1">
         <img
-          src="logo.png"
-          alt="Proyecto Sanar"
-          class="h-9 w-auto object-contain shrink-0"
+          src="logo-horizontal-oscuro.png"
+          alt="SANAR Rosario"
+          class="h-6 sm:h-8 w-auto object-contain shrink-0"
           onerror="this.style.display='none'"
         />
         <div class="min-w-0">
-          <div id="headerPersona" class="text-sm font-semibold text-slate-900 truncate leading-tight"></div>
-          <div id="headerSubtitle" class="text-xs text-slate-500 leading-tight truncate">Mis registros</div>
+          <div id="headerPersona" class="text-[13px] sm:text-sm font-semibold text-white truncate leading-tight"></div>
+          <div id="headerSubtitle" class="text-xs text-[#cdb8de] leading-tight truncate">Mis registros</div>
         </div>
       </div>
       <button
         id="btnLogout"
-        class="text-xs text-slate-500 hover:text-slate-800 hover:underline shrink-0"
+        class="text-xs text-[#cdb8de] hover:text-white hover:underline shrink-0 min-h-[44px] px-1"
       >Salir</button>
     </div>
   </header>
@@ -97,8 +119,8 @@
   <!-- LOGIN -->
   <template id="tplLogin">
     <div class="fade-in max-w-sm mx-auto pt-6 sm:pt-10">
-      <div class="flex justify-center mb-6">
-        <img src="logo.png" alt="Proyecto Sanar" class="max-h-24 sm:max-h-32 w-auto object-contain" onerror="this.style.display='none'" />
+      <div class="flex justify-center mb-6 rounded-2xl bg-berenjena px-6 py-7">
+        <img src="logo-vertical-oscuro.png" alt="SANAR Rosario" class="h-28 sm:h-32 w-auto object-contain" onerror="this.style.display='none'" />
       </div>
 
       <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-6">
@@ -222,11 +244,81 @@
     </div>
   </template>
 
+  <!-- USUARIOS (supervisora / admin): altas y perfiles -->
+  <template id="tplUsuarios">
+    <div class="fade-in space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-card p-5">
+        <h1 class="text-xl font-bold text-slate-900">Usuarios</h1>
+        <p class="text-sm text-slate-600 mt-1">Una colaboradora nueva se agrega primero en el formulario de producción de Google: apenas la guardes, aparece acá. Tildá su perfil, cargá su DNI y queda creado su usuario. Entra con los últimos 4 números del DNI y la app le pide elegir su PIN.</p>
+        <ul class="text-sm text-slate-600 mt-3 space-y-1">
+          <li><b class="text-slate-800">Colaboradora:</b> carga y consulta su producción.</li>
+          <li><b class="text-slate-800">Contadora:</b> carga los conteos y arma las bolsas para esterilizar.</li>
+          <li><b class="text-slate-800">Las dos:</b> ve las dos cosas.</li>
+        </ul>
+      </div>
+
+      <div id="uAviso" role="status" class="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800" hidden></div>
+
+      <div id="uEstado" class="text-center py-8 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="uPendientesWrap" hidden>
+        <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">En el formulario y sin usuario</h2>
+        <div id="uPendientes" class="space-y-3"></div>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-5">
+        <h2 class="text-base font-semibold text-slate-900">Alguien que no está en el formulario</h2>
+        <p class="text-sm text-slate-600 mt-1">Para una contadora que no produce<span id="uFueraSup" hidden> o una supervisora</span>.</p>
+        <form id="uFueraForm" class="mt-4 space-y-3" autocomplete="off" novalidate>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uFueraNombre">Apellido, Nombre</label>
+            <input id="uFueraNombre" type="text" autocomplete="off" placeholder="Apellido, Nombre" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+          <fieldset id="uFueraPerfil" hidden>
+            <legend class="text-xs font-medium text-slate-500 uppercase tracking-wide">Perfil</legend>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <label class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer"><input type="radio" name="uFueraRol" value="contadora" class="accent-brand-700" checked /> Contadora</label>
+              <label class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer"><input type="radio" name="uFueraRol" value="supervisora" class="accent-brand-700" /> Supervisora</label>
+            </div>
+          </fieldset>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uFueraDni">DNI</label>
+            <input id="uFueraDni" type="text" inputmode="numeric" autocomplete="off" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+            <p id="uFueraDniAyuda" class="text-xs text-slate-500 mt-1">Entra con los últimos 4 números del DNI y la app le pide elegir su PIN.</p>
+          </div>
+          <div id="uFueraPinWrap" hidden>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uFueraPin">PIN inicial de supervisora (6 números)</label>
+            <input id="uFueraPin" type="text" inputmode="numeric" maxlength="6" autocomplete="off" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+          <p id="uFueraError" class="text-sm text-red-600" hidden></p>
+          <button type="submit" id="uFueraBtn" class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50">Crear usuario</button>
+        </form>
+      </section>
+
+      <section id="uPerfilWrap" class="bg-white rounded-2xl border border-slate-200 shadow-card p-5" hidden>
+        <h2 class="text-base font-semibold text-slate-900">Cambiar el perfil de alguien</h2>
+        <p class="text-sm text-slate-600 mt-1">Por ejemplo, si una colaboradora empieza también a contar, o si una contadora deja de producir.</p>
+        <form id="uPerfilForm" class="mt-4 space-y-3" novalidate>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="uPerfilPersona">Persona</label>
+            <select id="uPerfilPersona" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></select>
+          </div>
+          <div id="uPerfilTildes"></div>
+          <p id="uPerfilError" class="text-sm text-red-600" hidden></p>
+          <button type="submit" id="uPerfilBtn" class="w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base disabled:opacity-50">Guardar perfil</button>
+        </form>
+      </section>
+    </div>
+  </template>
+
   <!-- HOME -->
   <template id="tplHome">
     <div class="fade-in">
-      <div class="flex justify-center mb-8">
-        <img src="logo.png" alt="Proyecto Sanar" class="max-h-24 sm:max-h-32 w-auto object-contain" onerror="this.style.display='none'" />
+      <div class="flex justify-center mb-8 rounded-2xl bg-berenjena px-6 py-6">
+        <img src="logo-vertical-oscuro.png" alt="SANAR Rosario" class="h-24 sm:h-28 w-auto object-contain" onerror="this.style.display='none'" />
       </div>
 
       <div class="grid gap-4">
@@ -241,7 +333,7 @@
           </div>
         </a>
 
-        <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/consulta">
+        <a id="linkConsulta" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/consulta">
           <div class="flex items-start gap-4">
             <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center text-2xl shrink-0">📋</div>
             <div class="min-w-0">
@@ -256,6 +348,13 @@
           <div class="flex items-center gap-3 text-slate-600">
             <div class="w-9 h-9 rounded-xl bg-slate-100 grid place-items-center text-base shrink-0">🔒</div>
             <div class="text-sm">Cambiar mi PIN</div>
+          </div>
+        </a>
+
+        <a id="linkUsuarios" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-4" href="#/usuarios" hidden>
+          <div class="flex items-center gap-3 text-slate-600">
+            <div class="w-9 h-9 rounded-xl bg-slate-100 grid place-items-center text-base shrink-0">👤</div>
+            <div class="text-sm">Usuarios: altas y perfiles</div>
           </div>
         </a>
 
@@ -359,14 +458,360 @@
     </article>
   </template>
 
+  <!-- BLOQUE DE CONTEO EN EL INICIO (contadora / supervisora / admin) -->
+  <template id="tplHomeConteo">
+    <section class="grid gap-4" aria-label="Conteo">
+      <a id="linkConteoForm" class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#" target="_blank" rel="noopener noreferrer">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-2xl shrink-0">🧺</div>
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-slate-900">Cargar conteo</h2>
+            <p class="text-sm text-slate-600 mt-1">Abrir el formulario para registrar un canasto ya revisado.</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </div>
+      </a>
+
+      <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/bolsas">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-2xl shrink-0">📦</div>
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-slate-900">Bolsas para esterilizar</h2>
+            <p class="text-sm text-slate-600 mt-1">Cuánto hay contado sin embolsar y cuántas bolsas alcanzan.</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </div>
+      </a>
+
+      <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/conteos">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-2xl shrink-0">📊</div>
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-slate-900">Conteos del día</h2>
+            <p class="text-sm text-slate-600 mt-1">Lo contado de cada día de producción, por colaboradora y por producto.</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </div>
+      </a>
+
+      <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/cruce">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 grid place-items-center text-2xl shrink-0">🔎</div>
+          <div class="min-w-0">
+            <h2 class="text-lg font-semibold text-slate-900">Cruce con lo declarado</h2>
+            <p class="text-sm text-slate-600 mt-1">Lo que cargó cada colaboradora comparado con lo que se contó.</p>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        </div>
+      </a>
+    </section>
+  </template>
+
+  <!-- CRUCE: LO DECLARADO POR CADA COLABORADORA VS LO CONTADO -->
+  <template id="tplCruce">
+    <div class="fade-in space-y-4">
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="crMes">Mes</label>
+            <select id="crMes" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="crBuscar">Buscar</label>
+            <input id="crBuscar" type="search" placeholder="apellido o nombre" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+        </div>
+        <div role="group" aria-label="Qué mostrar" class="grid grid-cols-2 gap-2">
+          <button type="button" id="crVerRevisar" class="rounded-xl py-3 text-sm font-semibold">Para revisar</button>
+          <button type="button" id="crVerTodo" class="rounded-xl py-3 text-sm font-semibold">Todo</button>
+        </div>
+        <p class="text-xs text-slate-500">Para pagar vale lo que declaró cada colaboradora. Cuando no coincide con lo contado, elegí en cada caso «Usar lo contado» (queda como una corrección, con su motivo) o «Dejar lo declarado».</p>
+      </section>
+
+      <div id="crAviso" role="status" class="fixed bottom-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl text-white p-3 text-sm font-semibold shadow-lg" hidden></div>
+
+      <section id="crResumen" class="grid grid-cols-2 sm:grid-cols-4 gap-2" hidden></section>
+      <p id="crSinConteo" class="text-xs text-slate-500" hidden></p>
+
+      <div id="crEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="crLista" class="space-y-3"></section>
+    </div>
+  </template>
+
+  <!-- CONTEOS DEL DÍA -->
+  <template id="tplConteos">
+    <div class="fade-in space-y-4">
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
+        <div>
+          <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="cFecha">Día de producción</label>
+          <input id="cFecha" type="date" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+        </div>
+        <div role="group" aria-label="Agrupar" class="grid grid-cols-2 gap-2">
+          <button type="button" id="cVerPersona" class="rounded-xl py-3 text-sm font-semibold">Por colaboradora</button>
+          <button type="button" id="cVerProducto" class="rounded-xl py-3 text-sm font-semibold">Por producto</button>
+        </div>
+        <p class="text-xs text-slate-500">Tocá un renglón para ver cada conteo con su hora.</p>
+      </section>
+
+      <section id="cResumen" class="grid grid-cols-2 gap-2" hidden>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Canastos</div>
+          <div id="cCanastos" class="text-xl font-bold text-slate-900">0</div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Unidades</div>
+          <div id="cUnidades" class="text-xl font-bold text-slate-900">0</div>
+        </div>
+      </section>
+
+      <div id="cEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="cLista" class="space-y-3"></section>
+    </div>
+  </template>
+
+  <!-- BOLSAS PARA ESTERILIZAR -->
+  <template id="tplBolsas">
+    <div class="fade-in space-y-4">
+      <p class="text-sm text-slate-600">Lo contado que todavía no se embolsó, por producto. Cuando armes una bolsa, tocá «Cerrar bolsa».</p>
+
+      <div id="bAviso" role="status" class="flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800" hidden>
+        <span id="bAvisoTxt" class="flex-1 min-w-0"></span>
+        <button type="button" id="bAvisoDeshacer" class="shrink-0 underline font-semibold min-h-[44px] px-2" hidden>Deshacer</button>
+      </div>
+
+      <div id="bEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="bLista" class="space-y-3"></section>
+
+      <details id="bSinCapWrap" class="bg-white rounded-2xl border border-slate-200 p-4" hidden>
+        <summary class="text-sm font-semibold text-slate-700 cursor-pointer">Sin capacidad cargada (<span id="bSinCapN">0</span>)</summary>
+        <p class="text-xs text-slate-500 mt-2">La supervisora anota cuántas unidades entran por bolsa en la pestaña «Capacidad bolsas» del Google Sheet. Si el producto no se esteriliza, queda en esta lista.</p>
+        <ul id="bSinCap" class="mt-2 text-sm text-slate-700 space-y-1"></ul>
+      </details>
+
+      <section id="bUltimasWrap" hidden>
+        <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Últimas bolsas cerradas</h2>
+        <ul id="bUltimas" class="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100"></ul>
+      </section>
+    </div>
+  </template>
+
+  <!-- TARJETA DE LIQUIDACIÓN EN EL INICIO (supervisora / admin) -->
+  <template id="tplHomeLiquidacion">
+    <a class="card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-5" href="#/liquidacion">
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center text-2xl shrink-0">💰</div>
+        <div class="min-w-0">
+          <h2 class="text-lg font-semibold text-slate-900">Liquidación del mes</h2>
+          <p class="text-sm text-slate-600 mt-1">Cuánto le corresponde a cada colaboradora, con el detalle día por día.</p>
+        </div>
+        <svg class="w-5 h-5 text-slate-400 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+      </div>
+    </a>
+  </template>
+
+  <!-- LIQUIDACIÓN DEL MES -->
+  <template id="tplLiquidacion">
+    <div class="fade-in space-y-4">
+      <p class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+        Calcula igual que el Excel, pero el Excel sigue siendo el oficial hasta que hagamos un mes en paralelo.
+      </p>
+
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 sm:p-5 space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="lMes">Mes</label>
+            <select id="lMes" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-500 uppercase tracking-wide" for="lBuscar">Buscar</label>
+            <input id="lBuscar" type="search" placeholder="apellido o nombre" class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+          </div>
+        </div>
+        <p id="lInfoMes" class="text-sm text-slate-600"></p>
+      </section>
+
+      <!-- Estado del mes: abierto (se puede cerrar) o cerrado (montos fijos) -->
+      <section id="lCierre" hidden></section>
+
+      <section id="lTotales" class="grid grid-cols-2 sm:grid-cols-4 gap-2" hidden>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center col-span-2 sm:col-span-1">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Total a pagar</div>
+          <div id="lTotal" class="text-xl font-bold text-slate-900">—</div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Colaboradoras</div>
+          <div id="lConCarga" class="text-lg font-bold text-slate-900">—</div>
+          <div id="lConCargaSub" class="text-xs text-slate-500"></div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Horas netas</div>
+          <div id="lHoras" class="text-lg font-bold text-slate-900">—</div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-200 p-3 text-center col-span-2 sm:col-span-1">
+          <div class="text-xs uppercase tracking-wide text-slate-500">Unidades producidas</div>
+          <div id="lUnidades" class="text-lg font-bold text-slate-900">—</div>
+        </div>
+      </section>
+
+      <a href="#/liquidacion-resumen" class="card-tap flex items-center justify-between gap-3 rounded-2xl bg-white border border-slate-200 shadow-card p-4">
+        <span class="text-sm font-semibold text-slate-900">Resumen para Melina (imprimir o PDF)</span>
+        <svg class="w-5 h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+      </a>
+
+      <a href="#/liquidacion-parametros" class="card-tap flex items-center justify-between gap-3 rounded-2xl bg-white border border-slate-200 shadow-card p-4">
+        <span class="min-w-0">
+          <span class="block text-sm font-semibold text-slate-900">Precios y parámetros</span>
+          <span class="block text-xs text-slate-500 mt-0.5">Valor hora, grupos, productos, montos fijos, días laborales y colaboradoras</span>
+        </span>
+        <svg class="w-5 h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+      </a>
+
+      <details id="lAvisos" class="rounded-2xl bg-amber-50 border border-amber-200 p-4" open hidden>
+        <summary class="text-sm font-semibold text-amber-900 cursor-pointer">Antes de cerrar el mes (<span id="lAvisosN">0</span>)</summary>
+        <div id="lAvisosLista" class="mt-3 space-y-3 text-sm text-amber-900"></div>
+      </details>
+
+      <div id="lEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <div id="lVistaWrap" class="flex items-center justify-between gap-3" hidden>
+        <h2 class="text-sm font-semibold text-slate-900">Por colaboradora</h2>
+        <div role="group" aria-label="Cómo ver la liquidación" class="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+          <button type="button" id="lVerPlanilla" class="rounded-lg px-3 py-2 text-sm font-semibold">Planilla</button>
+          <button type="button" id="lVerTarjetas" class="rounded-lg px-3 py-2 text-sm font-semibold">Tarjetas</button>
+        </div>
+      </div>
+
+      <section id="lLista" class="space-y-2" aria-label="Colaboradoras"></section>
+    </div>
+  </template>
+
+  <!-- DETALLE DE LA LIQUIDACIÓN DE UNA COLABORADORA -->
+  <template id="tplLiqDetalle">
+    <div class="fade-in space-y-4">
+      <header>
+        <h1 id="ldNombre" class="text-xl font-bold text-slate-900"></h1>
+        <p id="ldMes" class="text-sm text-slate-500"></p>
+        <p id="ldDni" class="text-sm text-slate-500"></p>
+      </header>
+
+      <div id="ldAviso" role="status" class="fixed bottom-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl bg-emerald-700 text-white p-3 text-sm font-semibold shadow-lg" hidden></div>
+
+      <div id="ldEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <section id="ldResumen" class="grid grid-cols-2 sm:grid-cols-4 gap-2" hidden></section>
+
+      <!-- Observaciones del mes: salen en el resumen para Melina -->
+      <section id="ldObsWrap" class="bg-white rounded-2xl border border-slate-200 shadow-card p-4 space-y-2" hidden>
+        <label for="ldObs" class="block">
+          <span class="text-sm font-semibold text-slate-900">Observaciones del mes</span>
+          <span class="block text-xs text-slate-500">Salen en la columna Observaciones del resumen para Melina.</span>
+        </label>
+        <textarea id="ldObs" rows="2" maxlength="300" placeholder="Ej.: licencia médica del 13 al 20" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"></textarea>
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" id="ldObsGuardar" class="rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60">Guardar observación</button>
+          <span id="ldObsMsg" class="text-sm" hidden></span>
+        </div>
+      </section>
+
+      <div id="ldDiasTit" hidden>
+        <h2 class="text-sm font-semibold text-slate-900">Registros del mes</h2>
+        <p id="ldDiasSub" class="text-xs text-slate-500"></p>
+      </div>
+      <section id="ldDias" class="space-y-3"></section>
+    </div>
+  </template>
+
+  <!-- PRECIOS Y PARÁMETROS DE LA LIQUIDACIÓN (lo que antes se cambiaba en el Excel) -->
+  <template id="tplLiqParametros">
+    <div class="fade-in space-y-3">
+      <p class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+        Lo que cambies acá vale para los meses abiertos. Los meses cerrados quedan como se cerraron, con los precios de ese momento.
+      </p>
+
+      <div id="lpAviso" role="status" class="fixed bottom-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl bg-emerald-700 text-white p-3 text-sm font-semibold shadow-lg" hidden></div>
+
+      <div id="lpEstado" class="text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <div id="lpSecciones" class="space-y-3"></div>
+    </div>
+  </template>
+
+  <!-- RESUMEN DEL MES PARA IMPRIMIR (lo que se le manda a Melina) -->
+  <template id="tplLiqResumen">
+    <div class="fade-in space-y-4">
+      <div class="no-print flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm text-slate-600 flex-1 min-w-[200px]">Para guardarlo en PDF, tocá «Imprimir» y elegí «Guardar como PDF».</p>
+        <button type="button" id="lrImprimir" class="rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm shrink-0">Imprimir</button>
+      </div>
+
+      <div id="lrEstado" class="no-print text-center py-10 text-slate-500 text-sm" hidden>
+        <div class="inline-block w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+        <div data-slot="txt">Cargando…</div>
+      </div>
+
+      <div id="lrHoja" class="bg-white rounded-2xl border border-slate-200 p-4 overflow-x-auto" hidden>
+        <h1 class="text-lg font-bold text-slate-900">Resumen de liquidación · <span id="lrMes"></span></h1>
+        <p id="lrSub" class="text-xs text-slate-500 mt-1"></p>
+        <table class="mt-3 w-full text-xs border-collapse">
+          <thead>
+            <tr class="border-b-2 border-slate-300 text-left text-slate-600">
+              <th class="py-2 pr-2">#</th>
+              <th class="py-2 pr-2">Colaboradora</th>
+              <th class="py-2 pr-2">DNI</th>
+              <th class="py-2 pr-2 text-right">Días</th>
+              <th class="py-2 pr-2 text-right">Producción</th>
+              <th class="py-2 pr-2 text-right">Por hora</th>
+              <th class="py-2 pr-2 text-right">Fijo</th>
+              <th class="py-2 pr-2 text-right">A pagar</th>
+              <th class="py-2">Observaciones</th>
+            </tr>
+          </thead>
+          <tbody id="lrFilas"></tbody>
+          <tfoot>
+            <tr class="border-t-2 border-slate-300 font-bold text-slate-900">
+              <td class="py-2 pr-2" colspan="4">Total</td>
+              <td id="lrTotProd" class="py-2 pr-2 text-right"></td>
+              <td id="lrTotHoras" class="py-2 pr-2 text-right"></td>
+              <td id="lrTotFijo" class="py-2 pr-2 text-right"></td>
+              <td id="lrTotal" class="py-2 pr-2 text-right"></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </template>
+
   <!-- ================== SCRIPT ================== -->
   <script>
     // =====================================================================
     // CONFIG — URLs
     // =====================================================================
     const CONFIG = {
-      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwgxBv6ElWNWT0c3WNgF0uwJWR_qAZRxHOj7VafAoi_iexYOkM2Isv9ipu6Q5WLv9FM/exec',
+      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwgxBv6ElWNWT0c3WNgF0uwJWR_qAZRxHOj7VafAoi_iexYOkM2Isv9ipu6Q5WLv9FM/exec',  // implementación de producción
       GOOGLE_FORM_URL: 'https://forms.gle/cT4j7qkmeyXSjayu7',
+      CONTEO_FORM_URL: '',  // normalmente lo manda el backend (action=me)
     };
 
     // =====================================================================
@@ -382,6 +827,15 @@
         buscar: '',
         persona: localStorage.getItem('sanar.verPersona') || '',
       },
+      conteos: { fecha: '', ver: 'persona', datos: [] },
+      liq: { mes: localStorage.getItem('sanar.liqMes') || mesActualISO(), buscar: '', datos: null, datosMes: '', estado: null, confirmarCierre: false },
+      // Detalle de una colaboradora: qué cantidad se está corrigiendo
+      liqd: { persona: '', datos: null, editando: '' },
+      // Cruce declarado vs contado: qué producto se está resolviendo («usar» o «dejar») y los filtros
+      cruce: { mes: '', datos: null, soloRevisar: true, buscar: '', editando: null },
+      // Precios y parámetros: qué secciones están abiertas, qué fila se está editando y los filtros
+      // (pendiente: formulario a abrir al llegar desde un aviso de la liquidación)
+      liqp: { datos: null, abiertas: new Set(['valores']), editando: '', prefijo: {}, pendiente: null, buscarProd: '', soloSinGrupo: false, buscarCol: '', mesFijos: '' },
     };
 
     function loadSession() {
@@ -437,9 +891,19 @@
         return;
       }
       const hash = location.hash || '#/';
+      // La planilla de liquidación y el resumen necesitan más ancho que el resto
+      document.getElementById('main').className = (/^#\/liquidacion(-resumen)?$/.test(hash) ? 'max-w-6xl' : 'max-w-3xl') + ' mx-auto px-4 py-6 pb-24';
       if (hash.startsWith('#/consulta')) return mountConsulta();
       if (hash.startsWith('#/cambiar-pin')) return mountCambiarPin();
       if (hash.startsWith('#/resetear-pin')) return mountResetear();
+      if (hash.startsWith('#/usuarios')) return mountUsuarios();
+      if (hash.startsWith('#/conteos')) return mountConteos();
+      if (hash.startsWith('#/bolsas')) return mountBolsas();
+      if (hash.startsWith('#/cruce')) return mountCruce();
+      if (hash.startsWith('#/liquidacion-resumen')) return mountLiqResumen();
+      if (hash.startsWith('#/liquidacion-parametros')) return mountLiqParametros();
+      if (hash.startsWith('#/liquidacion-detalle/')) return mountLiqDetalle(decodeURIComponent(hash.slice('#/liquidacion-detalle/'.length)));
+      if (hash.startsWith('#/liquidacion')) return mountLiquidacion();
       return mountHome();
     }
     window.addEventListener('hashchange', router);
@@ -500,6 +964,7 @@
             token: data.token,
             persona: data.persona,
             rol: data.rol,
+            permisos: data.permisos || [],
             debeCambiarPin: data.debeCambiarPin,
           });
           location.hash = data.debeCambiarPin ? '#/cambiar-pin' : '#/';
@@ -586,6 +1051,7 @@
 
       if (esGestion()) {
         node.getElementById('linkResetear').hidden = false;
+        node.getElementById('linkUsuarios').hidden = false;
         node.getElementById('consultaTitulo').textContent = 'Consultar registros de las colaboradoras';
         node.getElementById('consultaDesc').textContent = 'Elegí una colaboradora y mirá lo mismo que ve ella en su pantalla.';
       }
@@ -600,7 +1066,30 @@
         });
       }
 
+      // Contadora (permiso de conteo sin ser supervisora/admin): solo lo del conteo, nada de producción
+      if (soloConteo()) {
+        node.getElementById('linkCargar').hidden = true;
+        node.getElementById('linkConsulta').hidden = true;
+      }
+
+      // Contadora: el bloque de conteo va primero. Supervisora/admin: después de la consulta.
+      if (puedeContar()) {
+        const bloque = document.getElementById('tplHomeConteo').content.cloneNode(true);
+        const linkConteo = bloque.getElementById('linkConteoForm');
+        const urlConteo = state.session.conteoFormUrl || CONFIG.CONTEO_FORM_URL;
+        if (urlConteo && !urlConteo.startsWith('PONER_')) linkConteo.href = urlConteo;
+        else linkConteo.hidden = true;
+        const grid = node.querySelector('.grid');
+        grid.insertBefore(bloque, esGestion() ? grid.children[2] : grid.firstElementChild);
+      }
+      // Supervisora/admin: la liquidación va justo después de la consulta de registros
+      if (esGestion()) {
+        const grid = node.querySelector('.grid');
+        grid.insertBefore(document.getElementById('tplHomeLiquidacion').content.cloneNode(true), grid.children[2]);
+      }
+
       main.appendChild(node);
+      refrescarPermisos();
     }
 
     // =====================================================================
@@ -669,10 +1158,240 @@
     }
 
     // =====================================================================
+    // USUARIOS (supervisora / admin; el backend vuelve a validar el rol)
+    // Perfiles: colaboradora (producción), contadora (conteo) o las dos.
+    // El nombre de quien produce sale del formulario de producción: acá no se escribe, se elige.
+    // =====================================================================
+    const U_INPUT = 'mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500';
+    function mountUsuarios() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Usuarios' });
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplUsuarios').content.cloneNode(true));
+      document.getElementById('uFueraForm').onsubmit = crearFuera;
+      document.getElementById('uPerfilForm').onsubmit = guardarPerfil;
+      document.querySelectorAll('input[name="uFueraRol"]').forEach(r => (r.onchange = ajustarFuera));
+      document.getElementById('uPerfilPersona').onchange = mostrarPerfilElegido;
+      state.usuarios = [];
+
+      estadoEn('uEstado', 'Leyendo el formulario de producción…', true);
+      api({ action: 'usuarios_pendientes' }).then(renderUsuarios).catch(e => estadoEn('uEstado', e.message));
+    }
+
+    function renderUsuarios(data) {
+      const pendientes = data.pendientes || [];
+      const lista = document.getElementById('uPendientes');
+      if (!lista) return;
+      lista.innerHTML = '';
+      pendientes.forEach(p => lista.appendChild(tarjetaUsuarioNuevo(p)));
+      document.getElementById('uPendientesWrap').hidden = !pendientes.length;
+      if (pendientes.length) document.getElementById('uEstado').hidden = true;
+      else estadoEn('uEstado', 'Todas las colaboradoras del formulario ya tienen usuario.');
+
+      // Solo el admin crea supervisoras
+      document.getElementById('uFueraSup').hidden = !data.puedeCrearSupervisora;
+      document.getElementById('uFueraPerfil').hidden = !data.puedeCrearSupervisora;
+      if (!data.puedeCrearSupervisora) document.querySelector('input[name="uFueraRol"][value="contadora"]').checked = true;
+      ajustarFuera();
+
+      // Cambio de perfil: quienes ya tienen usuario (no supervisoras)
+      state.usuarios = data.usuarios || [];
+      const sel = document.getElementById('uPerfilPersona');
+      const elegida = sel.value;
+      sel.innerHTML = '';
+      sel.appendChild(nodo('option', '', 'Elegí la persona…')).value = '';
+      state.usuarios.forEach(u => {
+        const o = nodo('option', '', u.persona + ' · ' + textoPerfil(u));
+        o.value = u.persona;
+        sel.appendChild(o);
+      });
+      if (state.usuarios.some(u => u.persona === elegida)) sel.value = elegida;
+      document.getElementById('uPerfilWrap').hidden = !state.usuarios.length;
+      mostrarPerfilElegido();
+    }
+
+    const textoPerfil = p => (p.colaboradora && p.contadora ? 'colaboradora y contadora' : p.contadora ? 'contadora' : 'colaboradora');
+
+    // Dos casillas grandes: Colaboradora / Contadora
+    function tildesPerfil(colaboradora, contadora) {
+      const wrap = nodo('fieldset', '');
+      wrap.appendChild(nodo('legend', 'text-xs font-medium text-slate-500 uppercase tracking-wide', 'Perfil (podés tildar las dos)'));
+      const fila = nodo('div', 'mt-2 flex flex-wrap gap-2');
+      const casilla = (texto, valor) => {
+        const l = nodo('label', 'inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer');
+        const c = nodo('input', 'w-4 h-4 accent-brand-700');
+        c.type = 'checkbox';
+        c.checked = valor;
+        l.append(c, document.createTextNode(texto));
+        fila.appendChild(l);
+        return c;
+      };
+      const colab = casilla('Colaboradora', colaboradora);
+      const cont = casilla('Contadora', contadora);
+      wrap.appendChild(fila);
+      return { wrap, colab, cont };
+    }
+
+    function avisoUsuario(msg) {
+      const a = document.getElementById('uAviso');
+      a.textContent = msg;
+      a.hidden = false;
+      a.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    function textoFicha(ficha) {
+      return ficha === 'creada' ? ' Su ficha con el DNI quedó en «Precios y parámetros».'
+        : ficha === 'completada' ? ' Se completó su DNI en «Precios y parámetros».'
+        : (ficha && ficha !== 'ya estaba' ? ' ' + ficha : '');
+    }
+
+    function tarjetaUsuarioNuevo(p) {
+      const card = nodo('div', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
+      card.appendChild(nodo('div', 'font-semibold text-slate-900 break-words', p.persona));
+      if (p.parecido) {
+        card.appendChild(nodo('p', 'text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2',
+          'Ojo: ya hay un usuario parecido, «' + p.parecido + '». Si es la misma persona, corregí el nombre en el formulario en vez de crear otro usuario.'));
+      }
+      const abrir = nodo('button', 'mt-3 w-full rounded-xl border border-brand-700 text-brand-700 hover:bg-brand-50 font-semibold py-3 text-sm', 'Crear usuario');
+      abrir.type = 'button';
+      const form = nodo('form', 'mt-3 space-y-3');
+      form.hidden = true;
+      form.noValidate = true;
+      const tildes = tildesPerfil(true, false);
+      const id = 'dni-' + Math.random().toString(36).slice(2);
+      const label = nodo('label', 'text-xs font-medium text-slate-500 uppercase tracking-wide', 'DNI');
+      label.htmlFor = id;
+      const inp = nodo('input', U_INPUT);
+      Object.assign(inp, { id, type: 'text', inputMode: 'numeric', autocomplete: 'off' });
+      const ayuda = nodo('p', 'text-xs text-slate-500 mt-1', 'Entra con los últimos 4 números del DNI y la app le pide elegir su PIN.');
+      const campo = nodo('div');
+      campo.append(label, inp, ayuda);
+      const err = nodo('p', 'text-sm text-red-600');
+      err.hidden = true;
+      const botones = nodo('div', 'flex gap-2');
+      const cancelar = nodo('button', 'flex-1 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold py-3 text-sm', 'Cancelar');
+      cancelar.type = 'button';
+      const crear = nodo('button', 'flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-sm disabled:opacity-50', 'Crear usuario');
+      crear.type = 'submit';
+      botones.append(cancelar, crear);
+      form.append(tildes.wrap, campo, err, botones);
+      card.append(abrir, form);
+
+      abrir.onclick = () => { abrir.hidden = true; form.hidden = false; inp.focus(); };
+      cancelar.onclick = () => { form.hidden = true; abrir.hidden = false; err.hidden = true; };
+      form.onsubmit = async e => {
+        e.preventDefault();
+        err.hidden = true;
+        const falla = msg => { err.textContent = msg; err.hidden = false; };
+        if (!tildes.colab.checked && !tildes.cont.checked) return falla('Tildá si es colaboradora, contadora o las dos.');
+        const dni = inp.value.replace(/\D/g, '');
+        if (dni.length < 7 || dni.length > 9) return falla('Escribí el DNI completo (7 a 9 números).');
+        crear.disabled = true;
+        crear.textContent = 'Creando…';
+        try {
+          const data = await api({ action: 'crear_usuario', persona: p.persona, dni,
+            colaboradora: tildes.colab.checked ? '1' : '', contadora: tildes.cont.checked ? '1' : '' });
+          renderUsuarios(data);
+          avisoUsuario('Listo: ' + data.persona + ' ya puede entrar como ' + textoPerfil(data.perfil) +
+            ' con los últimos 4 números de su DNI.' + textoFicha(data.ficha));
+        } catch (e2) {
+          falla(e2.message);
+          crear.disabled = false;
+          crear.textContent = 'Crear usuario';
+        }
+      };
+      return card;
+    }
+
+    // Alguien que no está en el formulario: contadora (o supervisora, solo el admin)
+    function ajustarFuera() {
+      const sup = (document.querySelector('input[name="uFueraRol"]:checked') || {}).value === 'supervisora';
+      document.getElementById('uFueraPinWrap').hidden = !sup;
+      document.getElementById('uFueraDniAyuda').textContent = sup
+        ? 'Opcional. Con el DNI cargado, si se olvida el PIN se le puede resetear desde la app.'
+        : 'Entra con los últimos 4 números del DNI y la app le pide elegir su PIN.';
+    }
+
+    async function crearFuera(e) {
+      e.preventDefault();
+      const err = document.getElementById('uFueraError');
+      const btn = document.getElementById('uFueraBtn');
+      const sup = (document.querySelector('input[name="uFueraRol"]:checked') || {}).value === 'supervisora';
+      const nombre = document.getElementById('uFueraNombre').value.trim();
+      const dni = document.getElementById('uFueraDni').value.replace(/\D/g, '');
+      const pinEl = document.getElementById('uFueraPin');
+      const pin = pinEl.value.trim();
+      err.hidden = true;
+      const falla = msg => { err.textContent = msg; err.hidden = false; };
+      if (!/^[^,]+,[^,]+$/.test(nombre)) return falla('Escribí el nombre así: Apellido, Nombre.');
+      if (!sup && (dni.length < 7 || dni.length > 9)) return falla('Escribí el DNI completo (7 a 9 números).');
+      if (sup && dni && (dni.length < 7 || dni.length > 9)) return falla('El DNI tiene que tener entre 7 y 9 números.');
+      if (sup && !/^\d{6}$/.test(pin)) return falla('El PIN inicial tiene que tener 6 números.');
+      btn.disabled = true;
+      try {
+        const data = await api(sup
+          ? { action: 'crear_usuario', rol: 'supervisora', persona: nombre, dni, pin }
+          : { action: 'crear_usuario', persona: nombre, dni, contadora: '1' });
+        document.getElementById('uFueraForm').reset();
+        renderUsuarios(data);
+        avisoUsuario(sup
+          ? 'Listo: ' + data.persona + ' ya puede entrar como supervisora con el PIN inicial. La primera vez, la app le pide elegir el suyo.'
+          : 'Listo: ' + data.persona + ' ya puede entrar como contadora con los últimos 4 números de su DNI.' + textoFicha(data.ficha));
+      } catch (e2) {
+        falla(e2.message);
+      } finally {
+        btn.disabled = false;
+        pinEl.value = '';
+      }
+    }
+
+    // Cambio de perfil de quien ya tiene usuario
+    function mostrarPerfilElegido() {
+      const persona = document.getElementById('uPerfilPersona').value;
+      const u = state.usuarios.find(x => x.persona === persona);
+      const cont = document.getElementById('uPerfilTildes');
+      cont.innerHTML = '';
+      document.getElementById('uPerfilError').hidden = true;
+      document.getElementById('uPerfilBtn').hidden = !u;
+      if (!u) return;
+      state.tildesPerfil = tildesPerfil(u.colaboradora, u.contadora);
+      cont.appendChild(state.tildesPerfil.wrap);
+    }
+
+    async function guardarPerfil(e) {
+      e.preventDefault();
+      const err = document.getElementById('uPerfilError');
+      const btn = document.getElementById('uPerfilBtn');
+      const persona = document.getElementById('uPerfilPersona').value;
+      const t = state.tildesPerfil;
+      err.hidden = true;
+      if (!persona || !t) { err.textContent = 'Elegí la persona.'; err.hidden = false; return; }
+      if (!t.colab.checked && !t.cont.checked) { err.textContent = 'Tildá si es colaboradora, contadora o las dos.'; err.hidden = false; return; }
+      btn.disabled = true;
+      try {
+        const data = await api({ action: 'cambiar_perfil', persona,
+          colaboradora: t.colab.checked ? '1' : '', contadora: t.cont.checked ? '1' : '' });
+        renderUsuarios(data);
+        avisoUsuario('Listo: ' + data.persona + ' ahora es ' + textoPerfil(data.perfil) +
+          '. Lo ve la próxima vez que abra la app.' + (data.aviso ? ' ' + data.aviso : ''));
+      } catch (e2) {
+        err.textContent = e2.message;
+        err.hidden = false;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // =====================================================================
     // CONSULTA
     // =====================================================================
     function mountConsulta() {
       if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (soloConteo()) { location.hash = '#/'; return mountHome(); }
 
       showHeader(true);
       setHeader({ back: true, subtitle: esGestion() ? 'Registros de las colaboradoras' : 'Mis registros' });
@@ -850,6 +1569,1729 @@
 
         lista.appendChild(node);
       }
+    }
+
+    // =====================================================================
+    // CONTEO (contadora / supervisora / admin; el backend vuelve a validar)
+    // =====================================================================
+    // Perfil contadora: cuenta canastos y no carga producción. Quien cuenta y produce es colaboradora con permiso de conteo.
+    function soloConteo() {
+      return !!state.session && state.session.rol === 'contadora';
+    }
+    function puedeContar() {
+      return esGestion() || soloConteo() || (!!state.session && (state.session.permisos || []).includes('conteo'));
+    }
+
+    function nodo(tag, clase, texto) {
+      const n = document.createElement(tag);
+      if (clase) n.className = clase;
+      if (texto != null) n.textContent = texto;
+      return n;
+    }
+    const num = n => Number(n).toLocaleString('es-AR');
+    function formatFechaCorta(iso) {
+      const [, m, d] = iso.split('-').map(Number);
+      return d + '/' + m;
+    }
+    function estadoEn(id, msg, spinner = false) {
+      const est = document.getElementById(id);
+      if (!est) return;
+      est.hidden = false;
+      est.querySelector('[data-slot="txt"]').textContent = msg;
+      est.querySelector('.animate-spin').style.display = spinner ? 'inline-block' : 'none';
+    }
+
+    // Rol y permisos pueden cambiar después del login (ej. le dan el permiso de conteo): se piden de nuevo en el inicio.
+    async function refrescarPermisos() {
+      try {
+        const data = await api({ action: 'me' });
+        const foto = () => JSON.stringify([state.session.rol, state.session.permisos || [], state.session.conteoFormUrl || '']);
+        const antes = foto();
+        state.session.rol = data.rol;
+        state.session.permisos = data.permisos || [];
+        state.session.conteoFormUrl = data.conteoFormUrl || '';
+        saveSession(state.session);
+        const despues = foto();
+        if (antes !== despues && (location.hash || '#/') === '#/') mountHome();
+      } catch { /* sin conexión: queda lo que había */ }
+    }
+
+    // ---------- Conteos del día ----------
+    function mountConteos() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!puedeContar()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Conteos del día' });
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplConteos').content.cloneNode(true));
+
+      const hoy = formatFechaISO(new Date());
+      const inpFecha = document.getElementById('cFecha');
+      inpFecha.max = hoy;
+      inpFecha.value = state.conteos.fecha || hoy;
+      inpFecha.addEventListener('change', () => {
+        if (!inpFecha.value) return;
+        state.conteos.fecha = inpFecha.value;
+        cargarConteos();
+      });
+      document.getElementById('cVerPersona').onclick = () => { state.conteos.ver = 'persona'; renderConteos(); };
+      document.getElementById('cVerProducto').onclick = () => { state.conteos.ver = 'producto'; renderConteos(); };
+      cargarConteos();
+    }
+
+    async function cargarConteos() {
+      document.getElementById('cLista').innerHTML = '';
+      document.getElementById('cResumen').hidden = true;
+      estadoEn('cEstado', 'Cargando conteos…', true);
+      try {
+        const data = await api({ action: 'conteos', fecha: state.conteos.fecha || formatFechaISO(new Date()) });
+        state.conteos.datos = data.conteos || [];
+        renderConteos();
+      } catch (err) {
+        estadoEn('cEstado', 'No se pudieron cargar los conteos: ' + err.message);
+      }
+    }
+
+    function renderConteos() {
+      const lista = document.getElementById('cLista');
+      if (!lista) return;
+      document.getElementById('cEstado').hidden = true;
+      const porPersona = state.conteos.ver !== 'producto';
+      for (const [id, activo] of [['cVerPersona', porPersona], ['cVerProducto', !porPersona]]) {
+        const b = document.getElementById(id);
+        b.setAttribute('aria-pressed', String(activo));
+        b.className = 'rounded-xl py-3 text-sm font-semibold ' +
+          (activo ? 'bg-brand-700 text-white' : 'bg-white border border-slate-300 text-slate-700');
+      }
+
+      const datos = state.conteos.datos;
+      document.getElementById('cCanastos').textContent = num(new Set(datos.map(c => c.persona + '|' + c.fecha_conteo + '|' + c.hora)).size);
+      document.getElementById('cUnidades').textContent = num(datos.reduce((s, c) => s + c.cantidad, 0));
+      document.getElementById('cResumen').hidden = false;
+
+      lista.innerHTML = '';
+      if (!datos.length) {
+        lista.appendChild(nodo('p', 'text-center py-10 text-slate-500', 'No hay conteos cargados de la producción de ese día.'));
+        return;
+      }
+      const grupos = new Map();
+      for (const c of datos) {
+        const clave = porPersona ? c.persona : c.producto;
+        if (!grupos.has(clave)) grupos.set(clave, []);
+        grupos.get(clave).push(c);
+      }
+      const total = cs => cs.reduce((s, c) => s + c.cantidad, 0);
+      for (const clave of [...grupos.keys()].sort((a, b) => a.localeCompare(b, 'es'))) {
+        const items = grupos.get(clave);
+        const card = nodo('article', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
+        const head = nodo('header', 'flex items-baseline justify-between gap-3');
+        head.appendChild(nodo('h2', 'font-semibold text-slate-900 min-w-0 break-words', clave));
+        head.appendChild(nodo('div', 'text-lg font-bold text-slate-900 shrink-0', num(total(items))));
+        card.appendChild(head);
+
+        // Adentro, el subtotal por la otra mirada (productos de la colaboradora, o colaboradoras del producto);
+        // tocando cada uno se ven los conteos de cada hora
+        const subgrupos = new Map();
+        for (const c of items) {
+          const sub = porPersona ? c.producto : c.persona;
+          if (!subgrupos.has(sub)) subgrupos.set(sub, []);
+          subgrupos.get(sub).push(c);
+        }
+        const cuerpo = nodo('div', 'mt-2 border-t border-slate-100 pt-1 text-sm text-slate-700');
+        for (const sub of [...subgrupos.keys()].sort((a, b) => a.localeCompare(b, 'es'))) {
+          const cs = subgrupos.get(sub).slice().sort((a, b) => (a.fecha_conteo + a.hora).localeCompare(b.fecha_conteo + b.hora));
+          const det = nodo('details', 'desplegable');
+          const sum = nodo('summary', 'flex items-center gap-2 py-1.5 cursor-pointer');
+          sum.appendChild(nodo('span', 'flecha inline-block text-slate-400 leading-none', '›'));
+          sum.appendChild(nodo('span', 'flex-1 min-w-0 break-words', sub));
+          sum.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', num(total(cs))));
+          det.appendChild(sum);
+          const ul = nodo('ul', 'pl-5 pb-1 text-xs text-slate-500 space-y-0.5');
+          for (const c of cs) {
+            const li = nodo('li', 'flex justify-between gap-3');
+            // Hora del conteo; si se contó otro día (ej. a primera hora del día siguiente), también la fecha
+            const cuando = (c.fecha_conteo !== c.fecha ? 'el ' + formatFechaCorta(c.fecha_conteo) + ' ' : '') + 'a las ' + c.hora;
+            li.appendChild(nodo('span', '', 'Contado ' + cuando));
+            li.appendChild(nodo('span', 'shrink-0', num(c.cantidad)));
+            ul.appendChild(li);
+          }
+          det.appendChild(ul);
+          cuerpo.appendChild(det);
+        }
+        card.appendChild(cuerpo);
+        lista.appendChild(card);
+      }
+    }
+
+    // ---------- Bolsas para esterilizar ----------
+    function mountBolsas() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!puedeContar()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Bolsas para esterilizar' });
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplBolsas').content.cloneNode(true));
+      cargarBolsas();
+    }
+
+    async function cargarBolsas() {
+      estadoEn('bEstado', 'Cargando…', true);
+      try {
+        renderBolsas(await api({ action: 'bolsas' }));
+      } catch (err) {
+        estadoEn('bEstado', 'No se pudo cargar: ' + err.message);
+      }
+    }
+
+    function renderBolsas(data) {
+      const lista = document.getElementById('bLista');
+      if (!lista) return;
+      document.getElementById('bEstado').hidden = true;
+
+      // Primero los que ya llenan al menos una bolsa
+      const conCapacidad = data.productos.filter(p => p.capacidad)
+        .sort((a, b) => (b.completas > 0) - (a.completas > 0) || a.producto.localeCompare(b.producto, 'es'));
+      const sinCapacidad = data.productos.filter(p => !p.capacidad);
+      lista.innerHTML = '';
+      if (!conCapacidad.length) {
+        lista.appendChild(nodo('p', 'text-center py-8 text-slate-500', 'No hay nada contado para embolsar.'));
+      }
+      for (const p of conCapacidad) lista.appendChild(tarjetaBolsa(p));
+
+      document.getElementById('bSinCapWrap').hidden = !sinCapacidad.length;
+      document.getElementById('bSinCapN').textContent = sinCapacidad.length;
+      const ulSin = document.getElementById('bSinCap');
+      ulSin.innerHTML = '';
+      for (const p of sinCapacidad) {
+        const li = nodo('li', 'flex justify-between gap-3');
+        li.appendChild(nodo('span', 'min-w-0 break-words', p.producto));
+        li.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', num(p.pendiente)));
+        ulSin.appendChild(li);
+      }
+
+      document.getElementById('bUltimasWrap').hidden = !data.ultimas.length;
+      const ul = document.getElementById('bUltimas');
+      ul.innerHTML = '';
+      const hoy = formatFechaISO(new Date());
+      for (const b of data.ultimas) {
+        const li = nodo('li', 'flex items-center gap-3 p-3');
+        const txt = nodo('div', 'min-w-0 flex-1');
+        txt.appendChild(nodo('div', 'text-sm text-slate-900 break-words', b.producto));
+        const cuando = (b.fecha === hoy ? 'Hoy' : formatFechaCorta(b.fecha)) + ' ' + b.hora;
+        const incompleta = b.capacidad && b.cantidad < b.capacidad ? ' · incompleta' : '';
+        txt.appendChild(nodo('div', 'text-xs text-slate-500', cuando + ' · ' + num(b.cantidad) + ' unidades' + incompleta));
+        li.appendChild(txt);
+        const btn = nodo('button', 'shrink-0 text-sm text-slate-600 underline min-h-[44px] px-2', 'Deshacer');
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Deshacer la bolsa de ' + b.producto + ' de las ' + b.hora);
+        btn.onclick = () => deshacerBolsa(b);
+        li.appendChild(btn);
+        ul.appendChild(li);
+      }
+    }
+
+    function tarjetaBolsa(p) {
+      const card = nodo('article', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
+      card.appendChild(nodo('h2', 'font-semibold text-slate-900 break-words', p.producto));
+      const fila = nodo('div', 'mt-2 flex items-baseline gap-2');
+      fila.appendChild(nodo('span', 'text-3xl font-bold text-slate-900', num(p.pendiente)));
+      fila.appendChild(nodo('span', 'text-sm text-slate-600', 'sin embolsar'));
+      card.appendChild(fila);
+      card.appendChild(nodo('p', 'text-sm text-slate-600 mt-1', p.completas > 0
+        ? 'Alcanza para ' + p.completas + (p.completas === 1 ? ' bolsa' : ' bolsas') + ' de ' + num(p.capacidad) +
+          (p.resto ? ' y sobran ' + num(p.resto) : '') + '.'
+        : 'Faltan ' + num(p.capacidad - p.pendiente) + ' para llenar una bolsa de ' + num(p.capacidad) + '.'));
+
+      const llenado = Math.min(p.pendiente, p.capacidad);
+      const barra = nodo('div', 'mt-3 h-2 rounded-full bg-slate-100 overflow-hidden');
+      barra.setAttribute('role', 'progressbar');
+      barra.setAttribute('aria-label', 'Primera bolsa');
+      barra.setAttribute('aria-valuemin', '0');
+      barra.setAttribute('aria-valuemax', String(p.capacidad));
+      barra.setAttribute('aria-valuenow', String(llenado));
+      const relleno = nodo('div', 'h-full rounded-full ' + (llenado >= p.capacidad ? 'bg-brand-600' : 'bg-amber-400'));
+      relleno.style.width = Math.round((llenado / p.capacidad) * 100) + '%';
+      barra.appendChild(relleno);
+      card.appendChild(barra);
+
+      const abrir = nodo('button', 'mt-4 w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-base', 'Cerrar bolsa');
+      abrir.type = 'button';
+      const form = nodo('form', 'mt-4 space-y-3');
+      form.hidden = true;
+      const idInput = 'cant-' + Math.random().toString(36).slice(2);
+      const label = nodo('label', 'text-xs font-medium text-slate-500 uppercase tracking-wide', '¿Cuántas van en esta bolsa?');
+      label.htmlFor = idInput;
+      const inp = nodo('input', 'mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-xl font-semibold text-center focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500');
+      Object.assign(inp, { id: idInput, type: 'number', inputMode: 'numeric', min: '1', step: '1', required: true });
+      inp.max = String(p.pendiente);
+      inp.value = String(llenado);
+      const campo = nodo('div');
+      campo.appendChild(label);
+      campo.appendChild(inp);
+      campo.appendChild(nodo('p', 'text-xs text-slate-500 mt-1', 'Bolsa llena: ' + num(p.capacidad) + '. Si la mandás incompleta, poné cuántas lleva.'));
+      const err = nodo('p', 'text-sm text-red-600');
+      err.hidden = true;
+      const botones = nodo('div', 'flex gap-2');
+      const cancelar = nodo('button', 'flex-1 rounded-xl border border-slate-300 bg-white text-slate-700 font-semibold py-3 text-sm', 'Cancelar');
+      cancelar.type = 'button';
+      const confirmar = nodo('button', 'flex-1 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-sm disabled:opacity-50', 'Confirmar');
+      confirmar.type = 'submit';
+      botones.appendChild(cancelar);
+      botones.appendChild(confirmar);
+      form.appendChild(campo);
+      form.appendChild(err);
+      form.appendChild(botones);
+      card.appendChild(abrir);
+      card.appendChild(form);
+
+      abrir.onclick = () => { abrir.hidden = true; form.hidden = false; inp.focus(); inp.select(); };
+      cancelar.onclick = () => { form.hidden = true; abrir.hidden = false; err.hidden = true; };
+      form.onsubmit = async e => {
+        e.preventDefault();
+        const cantidad = Number(inp.value);
+        err.hidden = true;
+        if (!Number.isInteger(cantidad) || cantidad < 1) { err.textContent = 'Poné cuántas unidades van en la bolsa.'; err.hidden = false; return; }
+        if (cantidad > p.pendiente) { err.textContent = 'Hay ' + num(p.pendiente) + ' sin embolsar.'; err.hidden = false; return; }
+        confirmar.disabled = true;
+        confirmar.textContent = 'Guardando…';
+        try {
+          const data = await api({ action: 'cerrar_bolsa', producto: p.producto, cantidad });
+          renderBolsas(data);
+          avisoBolsa('Bolsa cerrada: ' + num(cantidad) + ' de ' + p.producto + '.', data.cerrada);
+        } catch (e2) {
+          err.textContent = e2.message;
+          err.hidden = false;
+          confirmar.disabled = false;
+          confirmar.textContent = 'Confirmar';
+        }
+      };
+      return card;
+    }
+
+    function avisoBolsa(msg, bolsaParaDeshacer) {
+      const aviso = document.getElementById('bAviso');
+      if (!aviso) return;
+      document.getElementById('bAvisoTxt').textContent = msg;
+      const btn = document.getElementById('bAvisoDeshacer');
+      btn.hidden = !bolsaParaDeshacer;
+      btn.onclick = bolsaParaDeshacer ? () => deshacerBolsa(bolsaParaDeshacer) : null;
+      aviso.hidden = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function deshacerBolsa(b) {
+      if (!confirm('¿Deshacer la bolsa de ' + num(b.cantidad) + ' de ' + b.producto + '? Esas unidades vuelven a quedar sin embolsar.')) return;
+      try {
+        renderBolsas(await api({ action: 'anular_bolsa', id: b.id }));
+        avisoBolsa('Bolsa deshecha: las ' + num(b.cantidad) + ' unidades volvieron a quedar sin embolsar.', null);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // =====================================================================
+    // LIQUIDACIÓN (supervisora / admin; el backend vuelve a validar)
+    // =====================================================================
+    const pesos = n => '$ ' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+    // Precio por unidad con centavos (ej. $ 171,43), así la cuenta cantidad × precio cierra
+    const precioUnidad = n => '$ ' + (Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+    const horasTxt = n => (Math.round((Number(n) || 0) * 100) / 100).toLocaleString('es-AR') + ' hs';
+    function horaDecimal(x) {
+      if (x == null) return '';
+      const h = Math.floor(x);
+      const m = Math.round((x - h) * 60);
+      return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    }
+    function nombreMes(mesISO) {
+      const [y, m] = mesISO.split('-').map(Number);
+      return new Date(y, m - 1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    }
+
+    // Cómo se ve la lista: planilla (como el Excel, mejor en la compu) o tarjetas (mejor en el celular)
+    function vistaLiq() {
+      let v = '';
+      try { v = localStorage.getItem('sanar.liqVista') || ''; } catch { /* sin almacenamiento: queda la de la pantalla */ }
+      return v || (window.innerWidth >= 768 ? 'planilla' : 'tarjetas');
+    }
+    function cambiarVistaLiq(v) {
+      try { localStorage.setItem('sanar.liqVista', v); } catch { /* sin almacenamiento */ }
+      renderLiquidacion();
+    }
+    const n2 = x => (Math.round((Number(x) || 0) * 100) / 100).toLocaleString('es-AR');
+    // "2026-10-31 18:05" → "31/10/2026 18:05"
+    const fechaHoraTxt = s => (/^\d{4}-\d{2}-\d{2}/.test(s || '')
+      ? formatFechaCorta(s.slice(0, 10)) + '/' + s.slice(0, 4) + (s.length > 10 ? ' ' + s.slice(11, 16) : '')
+      : (s || ''));
+
+    function avisoFlotante(id, msg, esError) {
+      const a = document.getElementById(id);
+      if (!a || !msg) return;
+      a.textContent = msg;
+      a.classList.toggle('bg-emerald-700', !esError);
+      a.classList.toggle('bg-red-700', !!esError);
+      a.hidden = false;
+      clearTimeout(avisoFlotante.timer);
+      avisoFlotante.timer = setTimeout(() => (a.hidden = true), esError ? 7000 : 4000);
+    }
+
+    // Abre «Precios y parámetros» con una sección desplegada (y, si hace falta, el formulario de alta ya armado)
+    function irAParametros(seccion, extra) {
+      state.liqp.abiertas.add(seccion);
+      state.liqp.pendiente = extra || null;
+      location.hash = '#/liquidacion-parametros';
+    }
+
+    function mountLiquidacion() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Liquidación del mes' });
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplLiquidacion').content.cloneNode(true));
+      const aviso = nodo('div', 'fixed bottom-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl text-white p-3 text-sm font-semibold shadow-lg');
+      aviso.id = 'lAviso';
+      aviso.setAttribute('role', 'status');
+      aviso.hidden = true;
+      main.appendChild(aviso);
+
+      const selMes = document.getElementById('lMes');
+      const hoy = new Date();
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+        const iso = formatFechaISO(d).slice(0, 7);
+        const opt = document.createElement('option');
+        opt.value = iso;
+        opt.textContent = nombreMes(iso);
+        selMes.appendChild(opt);
+      }
+      selMes.value = state.liq.mes;
+      if (selMes.value !== state.liq.mes) state.liq.mes = selMes.value;
+      selMes.addEventListener('change', () => {
+        state.liq.mes = selMes.value;
+        state.liq.confirmarCierre = false;
+        try { localStorage.setItem('sanar.liqMes', selMes.value); } catch { /* sin almacenamiento */ }
+        cargarLiquidacion();
+      });
+      const buscar = document.getElementById('lBuscar');
+      buscar.value = state.liq.buscar;
+      buscar.addEventListener('input', () => { state.liq.buscar = buscar.value.trim().toLowerCase(); renderLiquidacion(); });
+      document.getElementById('lVerPlanilla').onclick = () => cambiarVistaLiq('planilla');
+      document.getElementById('lVerTarjetas').onclick = () => cambiarVistaLiq('tarjetas');
+
+      if (state.liq.datos && state.liq.datosMes === state.liq.mes) renderLiquidacion();
+      else cargarLiquidacion();
+    }
+
+    async function cargarLiquidacion() {
+      document.getElementById('lLista').innerHTML = '';
+      for (const id of ['lTotales', 'lAvisos', 'lCierre', 'lVistaWrap']) document.getElementById(id).hidden = true;
+      estadoEn('lEstado', 'Calculando la liquidación…', true);
+      try {
+        const data = await api({ action: 'liquidacion', mes: state.liq.mes });
+        state.liq.datos = data.liquidacion;
+        state.liq.estado = data.estado;
+        state.liq.datosMes = state.liq.mes;
+        renderLiquidacion();
+      } catch (err) {
+        estadoEn('lEstado', err.message);
+      }
+    }
+
+    // Cerrar, reabrir o asignar registros: después se vuelve a calcular la liquidación
+    async function accionLiq(params, pregunta, boton) {
+      if (pregunta && !confirm(pregunta)) return;
+      if (boton) boton.disabled = true;
+      try {
+        const data = await api(params);
+        state.liq.confirmarCierre = false;
+        await cargarLiquidacion();
+        avisoFlotante('lAviso', data.aviso);
+      } catch (err) {
+        avisoFlotante('lAviso', err.message, true);
+      } finally {
+        if (boton && boton.isConnected) boton.disabled = false;
+      }
+    }
+
+    function cantidadAvisosLiq(L) {
+      const av = L.avisos;
+      return av.productosSinPrecio.length + av.productosSinCatalogo.length + av.personasNoListadas.length + (L.diasLaborales == null ? 1 : 0) +
+        (av.diferenciasConteo || 0);
+    }
+
+    function renderLiquidacion() {
+      const lista = document.getElementById('lLista');
+      const L = state.liq.datos;
+      const E = state.liq.estado || { cerrado: false, mesesCerrados: [] };
+      if (!lista || !L) return;
+      document.getElementById('lEstado').hidden = true;
+
+      for (const o of document.getElementById('lMes').options) {
+        o.textContent = nombreMes(o.value) + (E.mesesCerrados.includes(o.value) ? ' · cerrado' : '');
+      }
+      document.getElementById('lInfoMes').textContent = (E.cerrado ? 'Cerrado' : 'Abierto') + ' · ' + (L.diasLaborales != null
+        ? L.diasLaborales + ' días laborales · mínimo ' + n2(L.diasLaborales * (L.horasMinimasPorDia || 6)) + ' hs por colaboradora'
+        : 'faltan los días laborales del mes');
+      renderCierreLiq(L, E);
+
+      const t = L.totales;
+      document.getElementById('lTotal').textContent = pesos(t.aPagar);
+      document.getElementById('lConCarga').textContent = String(L.filas.filter(f => f.aPagar).length);
+      document.getElementById('lConCargaSub').textContent = L.filas.filter(f => f.registros > 0).length + ' con cargas · ' +
+        L.filas.filter(f => f.montoFijo).length + ' con monto fijo';
+      document.getElementById('lHoras').textContent = n2(t.hsNetas);
+      document.getElementById('lUnidades').textContent = num(t.cantProductos);
+      document.getElementById('lTotales').hidden = false;
+      renderAvisosLiquidacion(L, E);
+
+      const planilla = vistaLiq() === 'planilla';
+      for (const [id, activo] of [['lVerPlanilla', planilla], ['lVerTarjetas', !planilla]]) {
+        const b = document.getElementById(id);
+        b.setAttribute('aria-pressed', String(activo));
+        b.className = 'rounded-lg px-3 py-2 text-sm font-semibold ' + (activo ? 'bg-white text-slate-900 shadow' : 'text-slate-600');
+      }
+      document.getElementById('lVistaWrap').hidden = false;
+
+      const q = state.liq.buscar;
+      lista.innerHTML = '';
+      const filas = L.filas.filter(f => !q || f.persona.toLowerCase().includes(q));
+      if (!filas.length) {
+        lista.appendChild(nodo('p', 'text-center py-10 text-slate-500', 'No hay colaboradoras que coincidan con la búsqueda.'));
+        return;
+      }
+      if (planilla) {
+        lista.appendChild(planillaLiq(filas));
+        return;
+      }
+      for (const f of filas) {
+        const a = nodo('a', 'card-tap block rounded-2xl bg-white border border-slate-200 shadow-card hover:shadow-card-hover p-4' +
+          (f.aPagar ? '' : ' opacity-70'));
+        a.href = '#/liquidacion-detalle/' + encodeURIComponent(f.persona);
+        const fila1 = nodo('div', 'flex items-baseline justify-between gap-3');
+        fila1.appendChild(nodo('h2', 'font-semibold text-slate-900 min-w-0 break-words', f.persona));
+        fila1.appendChild(nodo('div', 'text-lg font-bold text-slate-900 shrink-0', pesos(f.aPagar)));
+        a.appendChild(fila1);
+        const partes = [];
+        if (f.montoProduccion) partes.push('Producción ' + pesos(f.montoProduccion));
+        if (f.montoHoras) partes.push('Por hora ' + pesos(f.montoHoras));
+        if (f.montoFijo) partes.push('Fijo ' + pesos(f.montoFijo));
+        partes.push(f.diasConCarga ? f.diasConCarga + (f.diasConCarga === 1 ? ' día' : ' días') : 'Sin cargas');
+        a.appendChild(nodo('p', 'text-xs text-slate-500 mt-1', partes.join(' · ')));
+        if (f.observacion) a.appendChild(nodo('p', 'text-xs text-slate-700 mt-1 break-words', 'Obs.: ' + f.observacion));
+        lista.appendChild(a);
+      }
+    }
+
+    // La planilla del mes, con las mismas columnas que el resumen del Excel
+    function planillaLiq(filas) {
+      const caja = nodo('div', 'bg-white rounded-2xl border border-slate-200 shadow-card overflow-x-auto');
+      const tabla = nodo('table', 'w-full min-w-[900px] text-sm border-collapse');
+      const cols = [['Colaboradora', 'text-left'], ['Hs netas'], ['Unidades'], ['Producción'], ['Trabajo x hora'], ['Monto fijo'],
+        ['A pagar'], ['Inasist.'], ['Faltan hs'], ['Observaciones', 'text-left']];
+      const thead = nodo('thead');
+      const trh = nodo('tr', 'border-b border-slate-200');
+      for (const [c, al] of cols) trh.appendChild(nodo('th', 'px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap ' + (al || 'text-right'), c));
+      thead.appendChild(trh);
+      tabla.appendChild(thead);
+      const tbody = nodo('tbody');
+      const guion = (v, fmt) => (v ? fmt(v) : '—');
+      for (const f of filas) {
+        const tr = nodo('tr', 'border-b border-slate-100 hover:bg-slate-50' + (f.aPagar ? '' : ' text-slate-400'));
+        const td1 = nodo('td', 'px-3 py-2 whitespace-nowrap');
+        const a = nodo('a', 'font-semibold text-brand-700 hover:underline', f.persona);
+        a.href = '#/liquidacion-detalle/' + encodeURIComponent(f.persona);
+        td1.appendChild(a);
+        tr.appendChild(td1);
+        const celda = (txt, clase) => tr.appendChild(nodo('td', 'px-3 py-2 text-right whitespace-nowrap ' + (clase || ''), txt));
+        celda(guion(f.hsNetas, n2));
+        celda(guion(f.cantProductos, num));
+        celda(guion(f.montoProduccion, pesos));
+        celda(f.montoHoras ? pesos(f.montoHoras) + ' · ' + n2(f.horasTrabajo) + ' h' : '—');
+        celda(guion(f.montoFijo, pesos));
+        celda(pesos(f.aPagar), 'font-bold text-slate-900');
+        celda(f.inasistencias == null ? '—' : String(f.inasistencias));
+        celda(f.faltanteHsMinimas == null ? '—' : n2(f.faltanteHsMinimas));
+        tr.appendChild(nodo('td', 'px-3 py-2 text-xs text-slate-700 min-w-[180px] break-words', f.observacion || ''));
+        tbody.appendChild(tr);
+      }
+      tabla.appendChild(tbody);
+      const suma = campo => filas.reduce((s, f) => s + (Number(f[campo]) || 0), 0);
+      const tf = nodo('tr', 'border-t-2 border-slate-300 font-bold text-slate-900');
+      const pie = (txt, clase) => tf.appendChild(nodo('td', 'px-3 py-2 whitespace-nowrap ' + (clase || 'text-right'), txt));
+      pie('Total' + (filas.length < state.liq.datos.filas.length ? ' (filtradas)' : ''), 'text-left');
+      pie(n2(suma('hsNetas')));
+      pie(num(suma('cantProductos')));
+      pie(pesos(suma('montoProduccion')));
+      pie(pesos(suma('montoHoras')));
+      pie(pesos(suma('montoFijo')));
+      pie(pesos(suma('aPagar')));
+      pie(num(suma('inasistencias')));
+      pie(n2(suma('faltanteHsMinimas')));
+      pie('');
+      const tfoot = nodo('tfoot');
+      tfoot.appendChild(tf);
+      tabla.appendChild(tfoot);
+      caja.appendChild(tabla);
+      return caja;
+    }
+
+    // Estado del mes: abierto (con «Cerrar el mes» y su confirmación) o cerrado
+    function renderCierreLiq(L, E) {
+      const box = document.getElementById('lCierre');
+      box.innerHTML = '';
+      box.hidden = false;
+      const mesTxt = nombreMes(state.liq.mes);
+      if (E.cerrado) {
+        box.className = 'rounded-2xl bg-emerald-50 border border-emerald-200 p-4 space-y-1';
+        box.appendChild(nodo('p', 'font-semibold text-emerald-900', mesTitulo(state.liq.mes) + ' está cerrado' +
+          (E.cuando ? ' desde el ' + fechaHoraTxt(E.cuando) : '') + (E.cerradoPor ? ' (lo cerró ' + E.cerradoPor + ')' : '') + '.'));
+        box.appendChild(nodo('p', 'text-sm text-emerald-900', 'Estos montos quedan fijos: si después cambian los precios, ' + mesTxt +
+          ' no se modifica. Ya no se pueden corregir registros ni observaciones de este mes.'));
+        if (E.puedeReabrir) {
+          const b = nodo('button', 'text-sm font-semibold text-emerald-900 underline min-h-[44px] disabled:opacity-60', 'Reabrir el mes (solo Admin)');
+          b.type = 'button';
+          b.onclick = () => accionLiq({ action: 'liq_reabrir', mes: state.liq.mes },
+            '¿Reabrir ' + mesTxt + '? Se vuelve a calcular con los precios de ahora.', b);
+          box.appendChild(b);
+        }
+        return;
+      }
+      box.className = 'rounded-2xl bg-white border border-slate-200 shadow-card p-4 space-y-3';
+      if (!state.liq.confirmarCierre) {
+        const fila = nodo('div', 'flex flex-wrap items-center justify-between gap-3');
+        fila.appendChild(nodo('p', 'text-sm text-slate-600 flex-1 min-w-[220px]',
+          'Cuando esté todo revisado, cerrá el mes: los montos quedan fijos y el resumen para Melina ya es el definitivo.'));
+        const b = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm shrink-0', 'Cerrar ' + mesTxt);
+        b.type = 'button';
+        b.onclick = () => { state.liq.confirmarCierre = true; renderCierreLiq(L, E); };
+        fila.appendChild(b);
+        box.appendChild(fila);
+        return;
+      }
+      const n = cantidadAvisosLiq(L);
+      const conMonto = L.filas.filter(f => f.aPagar).length;
+      box.appendChild(nodo('p', 'font-semibold text-slate-900', '¿Cerrar ' + mesTxt + '?'));
+      box.appendChild(nodo('p', 'text-sm text-slate-700', 'Se congelan los montos de las ' + conMonto + ' colaboradoras con algo a pagar (total ' +
+        pesos(L.totales.aPagar) + '). Después ya no se pueden corregir registros ni observaciones de este mes.'));
+      if (n) box.appendChild(nodo('p', 'text-sm font-semibold text-amber-800', 'Quedan ' + n + (n === 1 ? ' aviso' : ' avisos') +
+        ' sin resolver (más abajo). Podés cerrar igual, pero conviene revisarlos antes.'));
+      const botones = nodo('div', 'flex flex-wrap gap-2');
+      const bCerrar = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60', 'Sí, cerrar el mes');
+      bCerrar.type = 'button';
+      bCerrar.onclick = () => accionLiq({ action: 'liq_cerrar', mes: state.liq.mes }, null, bCerrar);
+      const bCancelar = nodo('button', 'rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold px-5 py-3 text-sm', 'Cancelar');
+      bCancelar.type = 'button';
+      bCancelar.onclick = () => { state.liq.confirmarCierre = false; renderCierreLiq(L, E); };
+      botones.append(bCerrar, bCancelar);
+      box.appendChild(botones);
+    }
+
+    // Lo que conviene resolver antes de cerrar, cada cosa con su arreglo
+    function renderAvisosLiquidacion(L, E) {
+      const cont = document.getElementById('lAvisosLista');
+      const caja = document.getElementById('lAvisos');
+      cont.innerHTML = '';
+      const n = cantidadAvisosLiq(L);
+      document.getElementById('lAvisosN').textContent = n;
+      caja.hidden = n === 0 || E.cerrado;
+      if (caja.hidden) return;
+
+      const bloque = (titulo, items, boton) => {
+        if (!items.length) return;
+        const div = nodo('div');
+        div.appendChild(nodo('p', 'font-semibold', titulo));
+        const ul = nodo('ul', 'mt-1 space-y-1');
+        for (const txt of items) ul.appendChild(nodo('li', 'break-words', txt));
+        div.appendChild(ul);
+        if (boton) {
+          const b = nodo('button', 'mt-1 font-semibold underline min-h-[44px]', boton[0]);
+          b.type = 'button';
+          b.onclick = boton[1];
+          div.appendChild(b);
+        }
+        cont.appendChild(div);
+      };
+      const av = L.avisos;
+      const txtProd = p => p.producto + ' · ' + num(p.cantidad) + ' u. (' + p.personas.join(', ') + ')';
+      bloque('Productos sin precio (no tienen grupo), hoy se pagan $ 0:', av.productosSinPrecio.map(txtProd),
+        ['Asignarles grupo', () => { state.liqp.soloSinGrupo = true; irAParametros('productos'); }]);
+      bloque('Productos que no están en la lista de precios:', av.productosSinCatalogo.map(txtProd),
+        ['Agregarlos a la lista de precios', () => irAParametros('productos')]);
+
+      if (av.personasNoListadas.length) {
+        const div = nodo('div', 'space-y-2');
+        div.appendChild(nodo('p', 'font-semibold', 'Registros con un nombre que no está en la lista de colaboradoras:'));
+        const personas = L.filas.map(f => f.persona);
+        for (const p of av.personasNoListadas) {
+          const item = nodo('div', 'rounded-xl bg-white/70 border border-amber-200 p-3 space-y-2');
+          item.appendChild(nodo('p', 'break-words', '«' + p.persona + '» cargó ' + p.registros + (p.registros === 1 ? ' registro.' : ' registros.') +
+            (p.sugerencia ? ' ¿Es ' + p.sugerencia + '?' : '')));
+          const fila = nodo('div', 'flex flex-wrap items-center gap-2');
+          const sel = nodo('select', 'rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm min-h-[44px] max-w-full');
+          sel.setAttribute('aria-label', 'Colaboradora a la que se le asignan los registros de ' + p.persona);
+          const vacia = nodo('option', null, 'Elegí a quién…');
+          vacia.value = '';
+          sel.appendChild(vacia);
+          for (const nom of personas) {
+            const o = nodo('option', null, nom);
+            o.value = nom;
+            sel.appendChild(o);
+          }
+          sel.value = p.sugerencia || '';
+          const b = nodo('button', 'rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 text-sm min-h-[44px] disabled:opacity-60',
+            p.sugerencia ? 'Sí, asignárselo' : 'Asignar');
+          b.type = 'button';
+          b.onclick = () => {
+            if (!sel.value) return avisoFlotante('lAviso', 'Elegí a qué colaboradora se le asignan.', true);
+            accionLiq({ action: 'liq_reasignar', mes: state.liq.mes, persona: p.persona, nueva: sel.value }, null, b);
+          };
+          const nueva = nodo('button', 'text-sm font-semibold underline min-h-[44px]', 'Es una colaboradora nueva');
+          nueva.type = 'button';
+          nueva.onclick = () => irAParametros('colaboradoras', { editando: 'colaboradoras:nuevo', prefijo: { nombre_completo: p.persona } });
+          fila.append(sel, b, nueva);
+          item.appendChild(fila);
+          div.appendChild(item);
+        }
+        cont.appendChild(div);
+      }
+      if (av.diferenciasConteo) {
+        bloque('Lo declarado no coincide con lo contado:', [av.diferenciasConteo + (av.diferenciasConteo === 1 ? ' producto' : ' productos') +
+          ' de alguna colaboradora en algún día. Para pagar vale lo declarado hasta que lo revises.'],
+          ['Revisar el cruce', () => { state.cruce.mes = state.liq.mes; state.cruce.soloRevisar = true; location.hash = '#/cruce'; }]);
+      }
+      if (L.diasLaborales == null) {
+        bloque('Faltan los días laborales del mes:', ['Sin ese dato no se calculan inasistencias ni horas faltantes.'],
+          ['Cargarlos', () => irAParametros('diasLaborales', { editando: 'diasLaborales:nuevo', prefijo: { mes: state.liq.mes } })]);
+      }
+    }
+
+    function mountLiqResumen() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Resumen del mes' });
+      document.getElementById('btnBack').onclick = () => (location.hash = '#/liquidacion');
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplLiqResumen').content.cloneNode(true));
+      document.getElementById('lrImprimir').onclick = () => window.print();
+
+      if (state.liq.datos && state.liq.datosMes === state.liq.mes) return renderLiqResumen();
+      estadoEn('lrEstado', 'Calculando la liquidación…', true);
+      api({ action: 'liquidacion', mes: state.liq.mes }).then(data => {
+        state.liq.datos = data.liquidacion;
+        state.liq.estado = data.estado;
+        state.liq.datosMes = state.liq.mes;
+        document.getElementById('lrEstado').hidden = true;
+        renderLiqResumen();
+      }).catch(err => estadoEn('lrEstado', err.message));
+    }
+
+    function renderLiqResumen() {
+      const L = state.liq.datos;
+      const E = state.liq.estado || {};
+      const tbody = document.getElementById('lrFilas');
+      if (!tbody || !L) return;
+      document.getElementById('lrMes').textContent = mesTitulo(state.liq.mes);
+      document.getElementById('lrSub').textContent = 'Proyecto Sanar · ' +
+        (E.cerrado ? 'mes cerrado el ' + fechaHoraTxt((E.cuando || '').slice(0, 10)) : 'mes abierto: los montos todavía pueden cambiar') +
+        ' · generado el ' + new Date().toLocaleDateString('es-AR') + (L.diasLaborales != null ? ' · ' + L.diasLaborales + ' días laborales' : '');
+      tbody.innerHTML = '';
+      L.filas.forEach((f, i) => {
+        const tr = nodo('tr', 'border-b border-slate-100');
+        const celda = (txt, clase) => tr.appendChild(nodo('td', 'py-1.5 pr-2 ' + (clase || ''), txt));
+        celda(String(i + 1), 'text-slate-500');
+        celda(f.persona, 'text-slate-900');
+        celda(f.dni || '—', 'text-slate-600');
+        celda(String(f.diasConCarga), 'text-right');
+        celda(f.montoProduccion ? pesos(f.montoProduccion) : '—', 'text-right');
+        celda(f.montoHoras ? pesos(f.montoHoras) : '—', 'text-right');
+        celda(f.montoFijo ? pesos(f.montoFijo) : '—', 'text-right');
+        celda(pesos(f.aPagar), 'text-right font-semibold text-slate-900');
+        celda(f.observacion || '', 'text-slate-700');
+        tbody.appendChild(tr);
+      });
+      const suma = campo => L.filas.reduce((acc, f) => acc + (f[campo] || 0), 0);
+      document.getElementById('lrTotProd').textContent = pesos(suma('montoProduccion'));
+      document.getElementById('lrTotHoras').textContent = pesos(suma('montoHoras'));
+      document.getElementById('lrTotFijo').textContent = pesos(suma('montoFijo'));
+      document.getElementById('lrTotal').textContent = pesos(L.totales.aPagar);
+      document.getElementById('lrHoja').hidden = false;
+    }
+
+    function mountLiqDetalle(persona) {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Liquidación del mes' });
+      document.getElementById('btnBack').onclick = () => (location.hash = '#/liquidacion');
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplLiqDetalle').content.cloneNode(true));
+      document.getElementById('ldNombre').textContent = persona;
+      document.getElementById('ldMes').textContent = mesTitulo(state.liq.mes);
+      state.liqd = { persona, datos: null, editando: '' };
+      cargarLiqDetalle();
+    }
+
+    async function cargarLiqDetalle() {
+      if (!state.liqd.datos) estadoEn('ldEstado', 'Cargando…', true);
+      try {
+        const data = await api({ action: 'liquidacion_detalle', mes: state.liq.mes, persona: state.liqd.persona });
+        state.liqd.datos = data;
+        document.getElementById('ldEstado').hidden = true;
+        renderLiqDetalle();
+      } catch (err) {
+        estadoEn('ldEstado', err.message);
+      }
+    }
+
+    // Después de un ajuste: se recalcula el detalle y la liquidación del mes se vuelve a pedir al volver
+    async function ajusteDetalle(params) {
+      const data = await api(params);
+      state.liqd.editando = '';
+      state.liq.datos = null;
+      await cargarLiqDetalle();
+      avisoFlotante('ldAviso', data.aviso);
+    }
+
+    function renderLiqDetalle() {
+      const data = state.liqd.datos;
+      const res = document.getElementById('ldResumen');
+      const dias = document.getElementById('ldDias');
+      if (!res || !data) return;
+      const E = data.estado || {};
+      const f = data.fila;
+      document.getElementById('ldMes').textContent = mesTitulo(state.liq.mes) + ' · ' + (E.cerrado ? 'cerrado' : 'abierto');
+      const cobra = [];
+      if (f && f.montoProduccion) cobra.push('por producción');
+      if (f && f.montoHoras) cobra.push('por hora');
+      if (f && f.montoFijo) cobra.push('monto fijo');
+      document.getElementById('ldDni').textContent = (data.dni ? 'DNI ' + Number(data.dni).toLocaleString('es-AR') : 'Sin DNI cargado') +
+        (cobra.length ? ' · cobra ' + cobra.join(' y ') : '');
+
+      res.innerHTML = '';
+      const dato = (titulo, valor, sub, destacado) => {
+        const d = nodo('div', 'rounded-2xl bg-white border border-slate-200 p-3 text-center' + (destacado ? ' col-span-2 sm:col-span-1' : ''));
+        d.appendChild(nodo('div', 'text-xs uppercase tracking-wide text-slate-500', titulo));
+        d.appendChild(nodo('div', (destacado ? 'text-xl' : 'text-lg') + ' font-bold text-slate-900', valor));
+        if (sub) d.appendChild(nodo('div', 'text-xs text-slate-500', sub));
+        res.appendChild(d);
+      };
+      if (f) {
+        dato('A pagar', pesos(f.aPagar), '', true);
+        dato('Producción', pesos(f.montoProduccion), num(f.cantProductos) + ' unidades');
+        dato('Trabajo por hora', pesos(f.montoHoras), f.horasTrabajo ? n2(f.horasTrabajo) + ' h' : '');
+        if (f.montoFijo) dato('Monto fijo', pesos(f.montoFijo));
+        dato('Horas netas', n2(f.hsNetas), data.diasLaborales != null ? 'Mínimo del mes: ' + n2(data.diasLaborales * (data.horasMinimasPorDia || 6)) : '');
+        dato('Días con carga', f.diasConCarga + (data.diasLaborales != null ? ' de ' + data.diasLaborales : ''));
+        if (f.inasistencias != null) dato('Inasistencias', String(f.inasistencias));
+        if (f.faltanteHsMinimas != null) dato('Faltan hs mín.', n2(f.faltanteHsMinimas));
+        res.hidden = false;
+      }
+
+      // Observación del mes
+      const obsWrap = document.getElementById('ldObsWrap');
+      const obs = document.getElementById('ldObs');
+      const bObs = document.getElementById('ldObsGuardar');
+      const msg = document.getElementById('ldObsMsg');
+      obsWrap.hidden = !f;
+      obs.value = f ? f.observacion || '' : '';
+      obs.readOnly = !!E.cerrado;
+      bObs.hidden = !!E.cerrado;
+      msg.hidden = !E.cerrado;
+      msg.className = 'text-sm text-slate-500';
+      msg.textContent = E.cerrado ? 'El mes está cerrado: la observación ya no se cambia.' : '';
+      bObs.onclick = async () => {
+        bObs.disabled = true;
+        msg.hidden = true;
+        try {
+          const r = await api({ action: 'liq_observacion', mes: state.liq.mes, persona: state.liqd.persona, texto: obs.value.trim() });
+          f.observacion = obs.value.trim();
+          state.liq.datos = null;
+          msg.className = 'text-sm font-semibold text-emerald-700';
+          msg.textContent = r.aviso;
+        } catch (err) {
+          msg.className = 'text-sm font-semibold text-red-700';
+          msg.textContent = err.message;
+        } finally {
+          msg.hidden = false;
+          bObs.disabled = false;
+        }
+      };
+
+      // Registros día por día, con «Corregir» en cada cantidad
+      document.getElementById('ldDiasTit').hidden = !data.registros.length;
+      document.getElementById('ldDiasSub').textContent = data.registros.length + (data.registros.length === 1 ? ' registro' : ' registros') +
+        (E.cerrado ? '.' : ' · cada corrección queda registrada con su valor anterior y el motivo.');
+      dias.innerHTML = '';
+      if (!data.registros.length) {
+        dias.appendChild(nodo('p', 'text-center py-10 text-slate-500', 'No tiene cargas en este mes.'));
+        return;
+      }
+      for (const r of data.registros) {
+        const card = nodo('article', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
+        const head = nodo('header', 'flex items-baseline justify-between gap-3');
+        const tit = nodo('div', 'min-w-0');
+        tit.appendChild(nodo('div', 'text-xs uppercase tracking-wide text-brand-700 font-semibold', r.dia_semana));
+        tit.appendChild(nodo('div', 'font-bold text-slate-900', formatFechaLegible(r.fecha)));
+        head.appendChild(tit);
+        head.appendChild(nodo('div', 'text-lg font-bold text-slate-900 shrink-0', pesos(r.total)));
+        card.appendChild(head);
+        const info = [];
+        if (r.ingreso != null || r.egreso != null) info.push(horaDecimal(r.ingreso) + ' → ' + horaDecimal(r.egreso));
+        if (r.hsSalida) info.push('salió ' + n2(r.hsSalida) + ' h');
+        info.push(n2(r.hsNetas) + ' hs netas');
+        if (r.actividad) info.push(r.actividad);
+        card.appendChild(nodo('p', 'text-sm text-slate-600 mt-1', info.join(' · ')));
+        if (r.nombreCargado) card.appendChild(nodo('p', 'text-xs font-semibold text-amber-700 mt-1', 'Lo cargó como «' + r.nombreCargado + '»: se le asignó en la liquidación.'));
+        const ul = nodo('ul', 'mt-2 border-t border-slate-100 pt-2 text-sm text-slate-700 divide-y divide-slate-100');
+        for (const it of r.items) ul.appendChild(lineaCorregible(r, it, false, E));
+        for (const t of r.trabajos) ul.appendChild(lineaCorregible(r, t, true, E));
+        for (const a of r.anulados) ul.appendChild(lineaAnulada(a, E));
+        if (ul.children.length) card.appendChild(ul);
+        dias.appendChild(card);
+      }
+    }
+
+    function botonChico(texto, fn, color) {
+      const b = nodo('button', 'text-sm font-semibold underline min-h-[44px] px-1 disabled:opacity-60 ' + (color || 'text-brand-700'), texto);
+      b.type = 'button';
+      b.onclick = fn;
+      return b;
+    }
+
+    async function deshacerCorreccion(id, boton) {
+      boton.disabled = true;
+      try {
+        await ajusteDetalle({ action: 'liq_deshacer_correccion', id });
+      } catch (err) {
+        avisoFlotante('ldAviso', err.message, true);
+        if (boton.isConnected) boton.disabled = false;
+      }
+    }
+
+    // Un producto o un trabajo por hora del día, con su corrección (si tiene) y los botones para corregir
+    function lineaCorregible(r, it, esTrabajo, E) {
+      const clave = r.clave + '#' + it.columna;
+      if (state.liqd.editando === clave) return editorCorreccion(r, it, esTrabajo);
+      const li = nodo('li', 'py-1.5');
+      const fila = nodo('div', 'flex justify-between gap-3');
+      const izq = nodo('span', 'min-w-0 break-words');
+      if (esTrabajo) {
+        izq.textContent = (it.tipo || 'Trabajo por hora') + ' · ' + n2(it.horas) + ' h';
+      } else {
+        izq.appendChild(document.createTextNode(it.producto + ' · ' + num(it.cantidad) + ' × '));
+        izq.appendChild(it.precio ? document.createTextNode(precioUnidad(it.precio)) : nodo('span', 'font-semibold text-amber-700', 'sin precio'));
+      }
+      fila.appendChild(izq);
+      fila.appendChild(nodo('span', 'font-semibold text-slate-900 shrink-0', pesos(it.monto)));
+      li.appendChild(fila);
+      if (it.correccion) {
+        li.appendChild(nodo('p', 'text-xs font-semibold text-amber-700', 'Corregido por la supervisora · antes ' + n2(it.correccion.antes) +
+          (esTrabajo ? ' h' : '') + ' · ' + it.correccion.motivo));
+      }
+      if (!E.cerrado) {
+        const acciones = nodo('div', 'flex gap-3');
+        acciones.appendChild(botonChico(esTrabajo ? 'Corregir horas' : 'Corregir', () => { state.liqd.editando = clave; renderLiqDetalle(); }));
+        if (it.correccion) {
+          const b = botonChico('Deshacer corrección', () => deshacerCorreccion(it.correccion.id, b), 'text-slate-600');
+          acciones.appendChild(b);
+        }
+        li.appendChild(acciones);
+      }
+      return li;
+    }
+
+    // Lo que se corrigió a 0: ya no suma, pero queda a la vista para poder deshacerlo
+    function lineaAnulada(a, E) {
+      const li = nodo('li', 'py-1.5');
+      li.appendChild(nodo('p', 'text-slate-500 line-through break-words', a.item));
+      li.appendChild(nodo('p', 'text-xs font-semibold text-amber-700', 'Corregido a 0 por la supervisora · antes ' + n2(a.correccion.antes) + ' · ' + a.correccion.motivo));
+      if (!E.cerrado) {
+        const b = botonChico('Deshacer corrección', () => deshacerCorreccion(a.correccion.id, b), 'text-slate-600');
+        li.appendChild(b);
+      }
+      return li;
+    }
+
+    function editorCorreccion(r, it, esTrabajo) {
+      const li = nodo('li', 'py-2');
+      const form = nodo('form', 'rounded-xl border border-brand-200 bg-brand-50 p-3 space-y-3');
+      const original = it.correccion ? it.correccion.antes : (esTrabajo ? it.horas : it.cantidad);
+      const precio = esTrabajo ? (it.horas ? it.monto / it.horas : 0) : (it.precio || 0);
+      form.appendChild(nodo('p', 'text-sm font-semibold text-slate-900 break-words',
+        formatFechaLegible(r.fecha) + ' · ' + (esTrabajo ? it.tipo || 'Trabajo por hora' : it.producto)));
+      form.appendChild(nodo('p', 'text-sm text-slate-700', 'Cargó: ' + n2(original) + (esTrabajo ? ' h' : ' unidades')));
+      const campo = (label, tipo) => {
+        const lab = nodo('label', 'block');
+        lab.appendChild(nodo('span', 'text-xs font-medium text-slate-500 uppercase tracking-wide', label));
+        const inp = nodo('input', LP_INPUT);
+        inp.type = 'text';
+        if (tipo) inp.inputMode = tipo;
+        lab.appendChild(inp);
+        form.appendChild(lab);
+        return inp;
+      };
+      const inpValor = campo(esTrabajo ? 'Horas correctas' : 'Cantidad correcta', 'decimal');
+      inpValor.value = String(esTrabajo ? it.horas : it.cantidad);
+      const inpMotivo = campo('Motivo');
+      inpMotivo.placeholder = esTrabajo ? 'Ej.: fueron 2 h, no 3' : 'Ej.: la contadora contó 150';
+      inpMotivo.value = it.correccion ? it.correccion.motivo : '';
+      const vista = nodo('p', 'text-sm text-slate-700');
+      const actualizar = () => {
+        const v = Number(inpValor.value.replace(',', '.'));
+        vista.textContent = isFinite(v) && inpValor.value.trim() !== ''
+          ? 'Nuevo subtotal: ' + pesos(v * precio) + (precio ? ' (' + precioUnidad(precio) + (esTrabajo ? ' la hora)' : ' por unidad)') : '')
+          : '';
+      };
+      inpValor.addEventListener('input', actualizar);
+      actualizar();
+      form.appendChild(vista);
+      const error = nodo('p', 'text-sm font-semibold text-red-700');
+      error.hidden = true;
+      form.appendChild(error);
+      const botones = nodo('div', 'flex flex-wrap gap-2');
+      const bGuardar = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60', 'Guardar corrección');
+      bGuardar.type = 'submit';
+      const bCancelar = nodo('button', 'rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold px-5 py-3 text-sm', 'Cancelar');
+      bCancelar.type = 'button';
+      bCancelar.onclick = () => { state.liqd.editando = ''; renderLiqDetalle(); };
+      botones.append(bGuardar, bCancelar);
+      form.appendChild(botones);
+      form.onsubmit = async ev => {
+        ev.preventDefault();
+        error.hidden = true;
+        bGuardar.disabled = true;
+        try {
+          await ajusteDetalle({ action: 'liq_corregir', clave: r.clave, columna: it.columna, valor: inpValor.value.trim(), motivo: inpMotivo.value.trim() });
+        } catch (err) {
+          error.textContent = err.message;
+          error.hidden = false;
+        } finally {
+          if (form.isConnected) bGuardar.disabled = false;
+        }
+      };
+      setTimeout(() => { form.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); inpValor.focus(); }, 0);
+      li.appendChild(form);
+      return li;
+    }
+
+    // ---------- Cruce: lo declarado por cada colaboradora vs lo contado ----------
+    const CRUCE_TEXTO = {
+      coincide: 'Coincide',
+      diferencia: 'No coincide',
+      sinContar: 'No se contó',
+      sinDeclarar: 'No lo declaró',
+    };
+    const aRevisarCruce = p => p.estado !== 'coincide' && !p.revisado;
+
+    function mountCruce() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!puedeContar()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Cruce con lo declarado' });
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplCruce').content.cloneNode(true));
+
+      if (!state.cruce.mes) state.cruce.mes = state.liq.mes || mesActualISO();
+      const sel = document.getElementById('crMes');
+      const hoy = new Date();
+      for (let i = 0; i < 12; i++) {
+        const iso = formatFechaISO(new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)).slice(0, 7);
+        const o = nodo('option', null, nombreMes(iso));
+        o.value = iso;
+        sel.appendChild(o);
+      }
+      sel.value = state.cruce.mes;
+      if (sel.value !== state.cruce.mes) state.cruce.mes = sel.value;
+      sel.addEventListener('change', () => { state.cruce.mes = sel.value; state.cruce.editando = null; cargarCruce(); });
+      const buscar = document.getElementById('crBuscar');
+      buscar.value = state.cruce.buscar;
+      buscar.addEventListener('input', () => { state.cruce.buscar = buscar.value.trim().toLowerCase(); renderCruce(); });
+      document.getElementById('crVerRevisar').onclick = () => { state.cruce.soloRevisar = true; renderCruce(); };
+      document.getElementById('crVerTodo').onclick = () => { state.cruce.soloRevisar = false; renderCruce(); };
+      state.cruce.editando = null;
+      cargarCruce();
+    }
+
+    async function cargarCruce() {
+      if (!state.cruce.datos || state.cruce.datos.mes !== state.cruce.mes) {
+        document.getElementById('crLista').innerHTML = '';
+        document.getElementById('crResumen').hidden = true;
+        estadoEn('crEstado', 'Comparando lo declarado con lo contado…', true);
+      }
+      try {
+        state.cruce.datos = await api({ action: 'cruce', mes: state.cruce.mes });
+        document.getElementById('crEstado').hidden = true;
+        renderCruce();
+      } catch (err) {
+        estadoEn('crEstado', err.message);
+      }
+    }
+
+    function renderCruce() {
+      const lista = document.getElementById('crLista');
+      const D = state.cruce.datos;
+      if (!lista || !D) return;
+      for (const [id, activo] of [['crVerRevisar', state.cruce.soloRevisar], ['crVerTodo', !state.cruce.soloRevisar]]) {
+        const b = document.getElementById(id);
+        b.setAttribute('aria-pressed', String(activo));
+        b.className = 'rounded-xl py-3 text-sm font-semibold ' + (activo ? 'bg-brand-700 text-white' : 'bg-white border border-slate-300 text-slate-700');
+      }
+
+      const R = D.resumen;
+      const res = document.getElementById('crResumen');
+      res.innerHTML = '';
+      const dato = (titulo, valor, sub, alerta) => {
+        const d = nodo('div', 'rounded-2xl border p-3 text-center ' + (alerta ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200'));
+        d.appendChild(nodo('div', 'text-xs uppercase tracking-wide text-slate-500', titulo));
+        d.appendChild(nodo('div', 'text-lg font-bold text-slate-900', valor));
+        if (sub) d.appendChild(nodo('div', 'text-xs text-slate-500', sub));
+        res.appendChild(d);
+      };
+      dato('Días contados', num(R.diasConConteo), 'colaboradora × día');
+      dato('Coinciden', num(R.coinciden), 'productos');
+      dato('Para revisar', num(R.aRevisar), R.revisados ? num(R.revisados) + ' ya revisados' : '', R.aRevisar > 0);
+      dato('Unidades', num(R.unidadesContadas) + ' / ' + num(R.unidadesDeclaradas), 'contadas / declaradas');
+      res.hidden = false;
+      const sinConteo = document.getElementById('crSinConteo');
+      sinConteo.textContent = R.diasSinConteo
+        ? R.diasSinConteo + ' días con producción declarada todavía no tienen conteo: no se comparan.'
+        : '';
+      sinConteo.hidden = !R.diasSinConteo;
+
+      lista.innerHTML = '';
+      if (D.cerrado) lista.appendChild(nodo('p', 'rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-900',
+        mesTitulo(D.mes) + ' está cerrado: el cruce se puede ver, pero ya no se resuelve.'));
+      const q = state.cruce.buscar;
+      const dias = D.dias.filter(d => (!q || d.persona.toLowerCase().includes(q)) && (!state.cruce.soloRevisar || d.productos.some(aRevisarCruce)));
+      if (!dias.length) {
+        lista.appendChild(nodo('p', 'text-center py-10 text-slate-500', !D.dias.length
+          ? 'Todavía no hay conteos de ' + nombreMes(D.mes) + ' para comparar.'
+          : state.cruce.soloRevisar ? 'No queda nada para revisar. ' + (q ? '' : 'Todo lo contado coincide o ya está revisado.') : 'No hay colaboradoras que coincidan con la búsqueda.'));
+        return;
+      }
+      for (const d of dias) lista.appendChild(tarjetaCruce(d, D));
+    }
+
+    function tarjetaCruce(d, D) {
+      const card = nodo('article', 'bg-white rounded-2xl border border-slate-200 shadow-card p-4');
+      const head = nodo('header', 'flex items-start justify-between gap-3');
+      const tit = nodo('div', 'min-w-0');
+      tit.appendChild(nodo('h2', 'font-semibold text-slate-900 break-words', d.persona));
+      tit.appendChild(nodo('p', 'text-sm text-slate-600', formatFechaLegible(d.fecha) + ' · ' + d.canastos + (d.canastos === 1 ? ' canasto contado' : ' canastos contados')));
+      head.appendChild(tit);
+      const n = d.productos.filter(aRevisarCruce).length;
+      head.appendChild(nodo('span', 'shrink-0 rounded-full px-3 py-1 text-xs font-semibold ' + (n ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'),
+        n ? n + ' para revisar' : 'Todo bien'));
+      card.appendChild(head);
+      if (!d.declaro) card.appendChild(nodo('p', 'mt-2 text-sm font-semibold text-amber-800', 'No cargó su producción ese día en el formulario.'));
+      const ul = nodo('ul', 'mt-2 border-t border-slate-100 divide-y divide-slate-100');
+      for (const p of d.productos) ul.appendChild(lineaCruce(d, p, D));
+      card.appendChild(ul);
+      return card;
+    }
+
+    function lineaCruce(d, p, D) {
+      const li = nodo('li', 'py-2 text-sm');
+      const fila = nodo('div', 'flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1');
+      fila.appendChild(nodo('span', 'min-w-0 flex-1 break-words text-slate-800', p.producto));
+      const dif = p.contado - p.declarado;
+      const nums = nodo('span', 'shrink-0 text-slate-700');
+      nums.textContent = 'Declaró ' + num(p.declarado) + ' · contó ' + num(p.contado);
+      fila.appendChild(nums);
+      li.appendChild(fila);
+
+      const pie = nodo('div', 'mt-1 flex flex-wrap items-center gap-x-3 gap-y-1');
+      const colorEstado = p.estado === 'coincide' ? 'text-emerald-700' : p.revisado ? 'text-slate-600' : 'text-amber-800';
+      let txt = CRUCE_TEXTO[p.estado] + (dif && p.declarado && p.contado ? ' (' + (dif > 0 ? '+' : '') + num(dif) + ')' : '');
+      if (p.estado === 'coincide' && p.corregido) txt += ' · corregido según el conteo';
+      pie.appendChild(nodo('span', 'text-xs font-semibold ' + colorEstado, txt));
+      li.appendChild(pie);
+
+      if (p.revisado) {
+        li.appendChild(nodo('p', 'text-xs text-slate-600 mt-0.5 break-words', 'Revisado: queda lo declarado · ' + p.revisado.motivo + ' (' + p.revisado.quien + ')'));
+      } else if (p.estado === 'sinDeclarar') {
+        li.appendChild(nodo('p', 'text-xs text-slate-600 mt-0.5', 'Fijate si lo cargó con otra fecha o como otro producto: ahí lo podés corregir desde la liquidación.'));
+      }
+
+      const puede = D.puedeAjustar && !D.cerrado && p.estado !== 'coincide';
+      if (!puede) return li;
+      const ed = state.cruce.editando;
+      if (ed && ed.persona === d.persona && ed.fecha === d.fecha && ed.producto === p.producto) {
+        li.appendChild(editorCruce(d, p, ed.accion));
+        return li;
+      }
+      const acciones = nodo('div', 'flex flex-wrap gap-x-4');
+      const abrir = accion => () => { state.cruce.editando = { persona: d.persona, fecha: d.fecha, producto: p.producto, accion }; renderCruce(); };
+      if (p.revisado) {
+        const b = botonChico('Deshacer la revisión', async () => {
+          b.disabled = true;
+          await accionCruce({ action: 'cruce_deshacer', persona: d.persona, fecha: d.fecha, producto: p.producto }, b);
+        }, 'text-slate-600');
+        acciones.appendChild(b);
+      } else {
+        if (p.declarado > 0) acciones.appendChild(botonChico('Usar lo contado (' + num(p.contado) + ')', abrir('usar')));
+        acciones.appendChild(botonChico(p.declarado > 0 ? 'Dejar lo declarado (' + num(p.declarado) + ')' : 'Dejar así', abrir('dejar'), 'text-slate-700'));
+      }
+      li.appendChild(acciones);
+      return li;
+    }
+
+    function editorCruce(d, p, accion) {
+      const usar = accion === 'usar';
+      const form = nodo('form', 'mt-2 rounded-xl border border-brand-200 bg-brand-50 p-3 space-y-2');
+      form.appendChild(nodo('p', 'text-sm text-slate-800', usar
+        ? 'Se va a pagar ' + num(p.contado) + ' (lo contado) en vez de ' + num(p.declarado) + '. Queda como una corrección del registro, con el valor anterior.'
+        : 'Se va a pagar ' + num(p.declarado) + ' (lo declarado) y la diferencia queda marcada como revisada.'));
+      const lab = nodo('label', 'block');
+      lab.appendChild(nodo('span', 'text-xs font-medium text-slate-500 uppercase tracking-wide', 'Motivo'));
+      const inp = nodo('input', LP_INPUT);
+      inp.type = 'text';
+      inp.value = usar ? 'Según el conteo de la contadora' : '';
+      inp.placeholder = usar ? '' : 'Ej.: ese producto no pasa por la contadora';
+      lab.appendChild(inp);
+      form.appendChild(lab);
+      const error = nodo('p', 'text-sm font-semibold text-red-700');
+      error.hidden = true;
+      form.appendChild(error);
+      const botones = nodo('div', 'flex flex-wrap gap-2');
+      const bOk = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60',
+        usar ? 'Pagar lo contado' : 'Dejar lo declarado');
+      bOk.type = 'submit';
+      const bNo = nodo('button', 'rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold px-5 py-3 text-sm', 'Cancelar');
+      bNo.type = 'button';
+      bNo.onclick = () => { state.cruce.editando = null; renderCruce(); };
+      botones.append(bOk, bNo);
+      form.appendChild(botones);
+      form.onsubmit = async ev => {
+        ev.preventDefault();
+        error.hidden = true;
+        bOk.disabled = true;
+        const params = { action: usar ? 'cruce_usar_contado' : 'cruce_dejar_declarado', persona: d.persona, fecha: d.fecha, producto: p.producto, motivo: inp.value.trim() };
+        const r = await accionCruce(params, bOk);
+        if (r && r.error) { error.textContent = r.error; error.hidden = false; }
+      };
+      setTimeout(() => { form.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); inp.focus(); }, 0);
+      return form;
+    }
+
+    // Resolver una diferencia y volver a comparar; la liquidación del mes se recalcula al volver a ella
+    async function accionCruce(params, boton) {
+      try {
+        const r = await api(params);
+        state.cruce.editando = null;
+        state.liq.datos = null;
+        await cargarCruce();
+        avisoFlotante('crAviso', r.aviso);
+        return r;
+      } catch (err) {
+        if (boton && boton.isConnected) boton.disabled = false;
+        if (!state.cruce.editando) avisoFlotante('crAviso', err.message, true);
+        return { error: err.message };
+      }
+    }
+
+    // ---------- Precios y parámetros (lo que antes se cambiaba en el Excel) ----------
+    const LP_INPUT = 'mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500';
+    function mesTitulo(mesISO) {
+      if (!/^\d{4}-\d{2}$/.test(mesISO || '')) return mesISO || '(sin mes)';
+      const t = nombreMes(mesISO);
+      return t.charAt(0).toUpperCase() + t.slice(1);
+    }
+    const mesAnterior = mesISO => {
+      const [y, m] = mesISO.split('-').map(Number);
+      return formatFechaISO(new Date(y, m - 2, 1)).slice(0, 7);
+    };
+    const porNombre = (a, b) => a.localeCompare(b, 'es');
+
+    function mountLiqParametros() {
+      if (state.session.debeCambiarPin) { location.hash = '#/cambiar-pin'; return mountCambiarPin(); }
+      if (!esGestion()) { location.hash = '#/'; return mountHome(); }
+
+      showHeader(true);
+      setHeader({ back: true, subtitle: 'Precios y parámetros' });
+      document.getElementById('btnBack').onclick = () => (location.hash = '#/liquidacion');
+      const main = document.getElementById('main');
+      main.innerHTML = '';
+      main.appendChild(document.getElementById('tplLiqParametros').content.cloneNode(true));
+      const pendiente = state.liqp.pendiente || {};
+      state.liqp.pendiente = null;
+      state.liqp.editando = pendiente.editando || '';
+      state.liqp.prefijo = pendiente.prefijo || {};
+      if (!state.liqp.mesFijos) state.liqp.mesFijos = state.liq.mes;
+      cargarLiqParametros();
+    }
+
+    async function cargarLiqParametros() {
+      estadoEn('lpEstado', 'Cargando…', true);
+      try {
+        state.liqp.datos = await api({ action: 'liq_tablas' });
+        document.getElementById('lpEstado').hidden = true;
+        renderLiqParametros();
+      } catch (err) {
+        estadoEn('lpEstado', 'No se pudo cargar: ' + err.message);
+      }
+    }
+
+    // Guarda un cambio: el backend devuelve las tablas ya actualizadas y se redibuja todo
+    async function cambioLiq(params) {
+      const data = await api(params);
+      state.liqp.datos = data;
+      state.liqp.editando = '';
+      state.liqp.prefijo = {};
+      state.liq.datos = null;  // la liquidación se vuelve a calcular con los valores nuevos
+      renderLiqParametros();
+      const aviso = document.getElementById('lpAviso');
+      if (!aviso) return;
+      aviso.textContent = data.aviso || 'Guardado.';
+      aviso.hidden = false;
+      clearTimeout(cambioLiq.timer);
+      cambioLiq.timer = setTimeout(() => (aviso.hidden = true), 4000);
+    }
+    const lpGuardar = (tabla, fila) => vals => cambioLiq({
+      action: 'liq_guardar', tabla, fila: fila ? fila.fila : '', datos: JSON.stringify(vals), antes: fila ? JSON.stringify(fila) : '',
+    });
+    const lpBorrar = (tabla, fila, pregunta) => async () => {
+      if (!confirm(pregunta)) return;
+      await cambioLiq({ action: 'liq_borrar', tabla, fila: fila.fila, antes: JSON.stringify(fila) });
+    };
+    function lpEditar(clave, prefijo) {
+      state.liqp.editando = clave;
+      state.liqp.prefijo = prefijo || {};
+      renderLiqParametros();
+    }
+
+    function renderLiqParametros() {
+      const cont = document.getElementById('lpSecciones');
+      const D = state.liqp.datos;
+      if (!cont || !D) return;
+      const T = D.tablas;
+      const sinGrupo = T.productos.filter(p => !p.grupo).length;
+      const mesF = state.liqp.mesFijos || state.liq.mes;
+      const faltanDias = !T.diasLaborales.some(d => d.mes === state.liq.mes);
+      const secciones = [
+        ['valores', 'Valor de la hora', pesos(D.valorHora) + ' · ' + pesos(D.valorHoraTrabajo), lpValores],
+        ['grupos', 'Grupos y unidades por hora', String(T.grupos.length), lpGrupos],
+        ['productos', 'Productos', T.productos.length + (sinGrupo ? ' · ' + sinGrupo + ' sin grupo' : ''), lpProductos],
+        ['montosFijos', 'Montos fijos', mesTitulo(mesF) + ': ' + T.montosFijos.filter(m => m.mes === mesF).length, lpMontosFijos],
+        ['diasLaborales', 'Días laborales', faltanDias ? 'falta ' + nombreMes(state.liq.mes) : T.diasLaborales.length + ' meses', lpDiasLaborales],
+        ['colaboradoras', 'Colaboradoras', String(T.colaboradoras.length), lpColaboradoras],
+        ['historial', 'Últimos cambios', '', lpHistorial],
+      ];
+      cont.innerHTML = '';
+      for (const [id, titulo, resumen, pintar] of secciones) {
+        const det = nodo('details', 'desplegable bg-white rounded-2xl border border-slate-200 shadow-card');
+        det.open = state.liqp.abiertas.has(id);
+        det.addEventListener('toggle', () => (det.open ? state.liqp.abiertas.add(id) : state.liqp.abiertas.delete(id)));
+        const sum = nodo('summary', 'flex items-center gap-3 p-4 cursor-pointer');
+        sum.appendChild(nodo('span', 'flecha inline-block text-xl leading-none text-slate-400', '›'));
+        sum.appendChild(nodo('span', 'flex-1 min-w-0 font-semibold text-slate-900', titulo));
+        if (resumen) sum.appendChild(nodo('span', 'text-xs text-right shrink-0 ' + (/sin grupo|falta/.test(resumen) ? 'font-semibold text-amber-700' : 'text-slate-500'), resumen));
+        det.appendChild(sum);
+        const body = nodo('div', 'px-4 pb-4');
+        pintar(body, D);
+        det.appendChild(body);
+        cont.appendChild(det);
+      }
+    }
+
+    // Una fila: el dato y «Cambiar»; si es la que se está editando, el formulario en su lugar
+    function lpFila(cont, clave, pintar, editor, cerrado) {
+      if (state.liqp.editando === clave && !cerrado) { cont.appendChild(editor()); return; }
+      const fila = nodo('div', 'flex items-center justify-between gap-3 py-2 border-t border-slate-100');
+      const izq = nodo('div', 'min-w-0 text-sm');
+      pintar(izq);
+      fila.appendChild(izq);
+      if (cerrado) {
+        fila.appendChild(nodo('span', 'shrink-0 text-xs font-semibold text-slate-500 px-2', 'Mes cerrado'));
+      } else {
+        const btn = nodo('button', 'shrink-0 text-sm font-semibold text-brand-700 underline min-h-[44px] px-2', 'Cambiar');
+        btn.type = 'button';
+        btn.onclick = () => lpEditar(clave);
+        fila.appendChild(btn);
+      }
+      cont.appendChild(fila);
+    }
+
+    function lpAgregar(cont, clave, texto, editor) {
+      if (state.liqp.editando === clave) { cont.appendChild(editor()); return; }
+      const btn = nodo('button', 'my-2 w-full rounded-xl border border-dashed border-brand-500 text-brand-700 font-semibold py-3 text-sm', '+ ' + texto);
+      btn.type = 'button';
+      btn.onclick = () => lpEditar(clave);
+      cont.appendChild(btn);
+    }
+
+    // Cartel con lo que falta cargar y un «Agregar» para cada uno
+    function lpFaltantes(cont, titulo, nombres, clave, campo) {
+      if (!nombres.length) return;
+      const caja = nodo('div', 'my-2 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900');
+      caja.appendChild(nodo('p', 'font-semibold', titulo + ' (' + nombres.length + '):'));
+      for (const n of nombres) {
+        const fila = nodo('div', 'flex items-center justify-between gap-3');
+        fila.appendChild(nodo('span', 'min-w-0 break-words', n));
+        const b = nodo('button', 'shrink-0 font-semibold underline min-h-[44px] px-2', 'Agregar');
+        b.type = 'button';
+        b.onclick = () => lpEditar(clave, { [campo]: n });
+        fila.appendChild(b);
+        caja.appendChild(fila);
+      }
+      cont.appendChild(caja);
+    }
+
+    /**
+     * Formulario de una fila.
+     * campos: [{ k, label, tipo: 'texto' | 'numero' | 'mes' | 'select', opciones: [[valor, texto]], lista: [sugerencias], ayuda }]
+     * guardar(valores) y borrar() devuelven promesas; si fallan, el error se muestra en el formulario.
+     */
+    function lpEditor(titulo, campos, valores, guardar, borrar) {
+      const form = nodo('form', 'my-2 rounded-xl border border-brand-200 bg-brand-50 p-3 space-y-3');
+      if (titulo) form.appendChild(nodo('p', 'text-sm font-semibold text-slate-900 break-words', titulo));
+      const inputs = {};
+      for (const c of campos) {
+        const lab = nodo('label', 'block');
+        lab.appendChild(nodo('span', 'text-xs font-medium text-slate-500 uppercase tracking-wide', c.label));
+        let inp;
+        if (c.tipo === 'select') {
+          inp = nodo('select', LP_INPUT);
+          for (const [v, txt] of c.opciones) {
+            const o = nodo('option', null, txt);
+            o.value = v;
+            inp.appendChild(o);
+          }
+        } else {
+          inp = nodo('input', LP_INPUT);
+          inp.type = c.tipo === 'mes' ? 'month' : 'text';
+          if (c.tipo === 'numero') inp.inputMode = 'decimal';
+          if (c.lista && c.lista.length) {
+            const dl = nodo('datalist');
+            dl.id = 'lpLista' + Math.random().toString(36).slice(2);
+            for (const v of c.lista) {
+              const o = nodo('option');
+              o.value = v;
+              dl.appendChild(o);
+            }
+            lab.appendChild(dl);
+            inp.setAttribute('list', dl.id);
+          }
+        }
+        inp.value = valores[c.k] == null ? '' : valores[c.k];
+        inputs[c.k] = inp;
+        lab.appendChild(inp);
+        if (c.ayuda) lab.appendChild(nodo('span', 'block text-xs text-slate-500 mt-1', c.ayuda));
+        form.appendChild(lab);
+      }
+      const error = nodo('p', 'text-sm font-semibold text-red-700');
+      error.hidden = true;
+      form.appendChild(error);
+
+      const conEspera = async (fn, boton, txt) => {
+        error.hidden = true;
+        const original = boton.textContent;
+        boton.disabled = true;
+        boton.textContent = txt;
+        try {
+          await fn();
+        } catch (err) {
+          error.textContent = err.message;
+          error.hidden = false;
+        } finally {
+          // Si se guardó, el formulario ya no está (se redibujó); si no, vuelve a quedar usable
+          if (form.isConnected) { boton.disabled = false; boton.textContent = original; }
+        }
+      };
+      const botones = nodo('div', 'flex flex-wrap items-center gap-2');
+      const bGuardar = nodo('button', 'rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-3 text-sm disabled:opacity-60', 'Guardar');
+      bGuardar.type = 'submit';
+      const bCancelar = nodo('button', 'rounded-xl bg-white border border-slate-300 text-slate-700 font-semibold px-5 py-3 text-sm', 'Cancelar');
+      bCancelar.type = 'button';
+      bCancelar.onclick = () => lpEditar('');
+      botones.append(bGuardar, bCancelar);
+      if (borrar) {
+        const bBorrar = nodo('button', 'ml-auto text-sm font-semibold text-red-700 underline min-h-[44px] px-2 disabled:opacity-60', 'Borrar');
+        bBorrar.type = 'button';
+        bBorrar.onclick = () => conEspera(borrar, bBorrar, 'Borrando…');
+        botones.appendChild(bBorrar);
+      }
+      form.appendChild(botones);
+      form.onsubmit = ev => {
+        ev.preventDefault();
+        const vals = {};
+        for (const k of Object.keys(inputs)) vals[k] = inputs[k].value.trim();
+        conEspera(() => guardar(vals), bGuardar, 'Guardando…');
+      };
+      setTimeout(() => form.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 0);
+      return form;
+    }
+
+    function lpValores(body, D) {
+      const textos = {
+        valor_hora_produccion: ['Hora de producción', 'Base del precio por unidad: este valor ÷ las unidades por hora del grupo. Si lo cambiás, cambian todos los precios.'],
+        valor_hora_trabajo: ['Hora de trabajo', 'Lo que se paga por cada hora de corte, control, ADM/calidad, etc.'],
+        horas_minimas_por_dia: ['Horas mínimas por día', 'Para calcular las horas faltantes del mes. Es informativo: no cambia lo que se paga.'],
+      };
+      const enPesos = p => p.clave !== 'horas_minimas_por_dia';
+      for (const p of D.tablas.parametros) {
+        const [titulo, ayuda] = textos[p.clave] || [p.descripcion || p.clave, ''];
+        lpFila(body, 'parametros:' + p.fila, izq => {
+          izq.appendChild(nodo('div', 'font-semibold text-slate-900', titulo + ': ' + (enPesos(p) ? pesos(p.valor) : n2(p.valor) + ' h')));
+          if (ayuda) izq.appendChild(nodo('div', 'text-xs text-slate-500 mt-0.5', ayuda));
+        }, () => lpEditor(titulo, [{ k: 'valor', label: enPesos(p) ? 'Valor en pesos' : 'Horas', tipo: 'numero', ayuda }], p, lpGuardar('parametros', p)));
+      }
+    }
+
+    function camposGrupo(D) {
+      return [
+        { k: 'grupo', label: 'Nombre del grupo' },
+        { k: 'categoria', label: 'Categoría', lista: [...new Set(D.tablas.grupos.map(g => g.categoria).filter(Boolean))] },
+        { k: 'unidades_por_hora', label: 'Unidades por hora', tipo: 'numero', ayuda: 'El precio por unidad es ' + pesos(D.valorHora) + ' ÷ este número.' },
+        { k: 'observaciones', label: 'Observaciones' },
+      ];
+    }
+
+    function lpGrupos(body, D) {
+      body.appendChild(nodo('p', 'text-xs text-slate-500 pb-1', 'Cuántas unidades se hacen en una hora. De ahí sale el precio por unidad de todos los productos del grupo.'));
+      lpAgregar(body, 'grupos:nuevo', 'Agregar grupo', () => lpEditor('Grupo nuevo', camposGrupo(D), {}, lpGuardar('grupos', null)));
+      const porCategoria = new Map();
+      for (const g of D.tablas.grupos) {
+        const c = g.categoria || 'SIN CATEGORÍA';
+        if (!porCategoria.has(c)) porCategoria.set(c, []);
+        porCategoria.get(c).push(g);
+      }
+      for (const [cat, grupos] of porCategoria) {
+        body.appendChild(nodo('h3', 'pt-3 pb-1 text-xs font-semibold text-brand-700 uppercase tracking-wide', cat));
+        for (const g of grupos) {
+          lpFila(body, 'grupos:' + g.fila, izq => {
+            izq.appendChild(nodo('div', 'font-medium text-slate-900 break-words', g.grupo));
+            izq.appendChild(nodo('div', 'text-xs text-slate-500', num(g.unidades_por_hora) + ' por hora → ' + precioUnidad(g.precio) + ' c/u · ' +
+              g.productos + (g.productos === 1 ? ' producto' : ' productos') + (g.observaciones ? ' · ' + g.observaciones : '')));
+            if (g.repetido) izq.appendChild(nodo('div', 'text-xs font-semibold text-amber-700', 'Nombre repetido: para los precios se usa el de más arriba.'));
+          }, () => lpEditor(g.grupo, camposGrupo(D), g, lpGuardar('grupos', g),
+            lpBorrar('grupos', g, '¿Borrar el grupo «' + g.grupo + '»?')));
+        }
+      }
+    }
+
+    function camposProducto(D) {
+      const opciones = [['', 'Sin grupo (se paga $ 0)']];
+      for (const g of D.tablas.grupos) if (!g.repetido) opciones.push([g.grupo, g.grupo + ' · ' + precioUnidad(g.precio)]);
+      return [
+        { k: 'producto', label: 'Producto (tal cual figura en el formulario)', lista: D.productosFormulario },
+        { k: 'grupo', label: 'Grupo', tipo: 'select', opciones },
+        { k: 'multiplicador', label: 'Multiplicador', tipo: 'numero', ayuda: 'Vacío o 1: el precio del grupo. Ej.: EMPAQUETADO X2 lleva 2 (paga el doble).' },
+      ];
+    }
+
+    function lpProductos(body, D) {
+      lpFaltantes(body, 'Están en el formulario y no tienen precio', D.productosFormulario, 'productos:nuevo', 'producto');
+      lpAgregar(body, 'productos:nuevo', 'Agregar producto',
+        () => lpEditor('Producto nuevo', camposProducto(D), state.liqp.prefijo, lpGuardar('productos', null)));
+
+      const sinGrupo = D.tablas.productos.filter(p => !p.grupo).length;
+      const filtros = nodo('div', 'flex gap-2 items-center py-2');
+      const buscar = nodo('input', LP_INPUT.replace('mt-1 ', ''));
+      buscar.type = 'search';
+      buscar.placeholder = 'Buscar producto';
+      buscar.value = state.liqp.buscarProd;
+      filtros.appendChild(buscar);
+      if (sinGrupo || state.liqp.soloSinGrupo) {
+        const activo = state.liqp.soloSinGrupo;
+        const b = nodo('button', 'shrink-0 rounded-xl px-3 py-3 text-sm font-semibold ' +
+          (activo ? 'bg-amber-600 text-white' : 'bg-amber-50 border border-amber-200 text-amber-800'), 'Sin grupo (' + sinGrupo + ')');
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(activo));
+        b.onclick = () => { state.liqp.soloSinGrupo = !activo; renderLiqParametros(); };
+        filtros.appendChild(b);
+      }
+      body.appendChild(filtros);
+
+      const lista = nodo('div');
+      body.appendChild(lista);
+      const pintar = () => {
+        lista.innerHTML = '';
+        const q = state.liqp.buscarProd.toLowerCase();
+        const prods = D.tablas.productos
+          .filter(p => (!state.liqp.soloSinGrupo || !p.grupo) && (!q || p.producto.toLowerCase().includes(q)))
+          .sort((a, b) => porNombre(a.producto, b.producto));
+        if (!prods.length) lista.appendChild(nodo('p', 'py-4 text-sm text-slate-500 text-center', 'No hay productos que coincidan.'));
+        for (const p of prods) {
+          lpFila(lista, 'productos:' + p.fila, izq => {
+            izq.appendChild(nodo('div', 'font-medium text-slate-900 break-words', p.producto));
+            izq.appendChild(p.grupo
+              ? nodo('div', 'text-xs text-slate-500', p.grupo + (p.multiplicador ? ' × ' + p.multiplicador : '') + ' → ' + precioUnidad(p.precio) + ' c/u')
+              : nodo('div', 'text-xs font-semibold text-amber-700', 'Sin grupo: se paga $ 0'));
+          }, () => lpEditor(p.producto, camposProducto(D), p, lpGuardar('productos', p),
+            lpBorrar('productos', p, '¿Sacar «' + p.producto + '» de la lista de precios? Si alguien lo carga, va a aparecer en «Para revisar».')));
+        }
+      };
+      buscar.addEventListener('input', () => { state.liqp.buscarProd = buscar.value.trim(); pintar(); });
+      pintar();
+    }
+
+    function camposFijo(D) {
+      const personas = D.tablas.colaboradoras.map(c => c.nombre_completo).sort(porNombre);
+      return [
+        { k: 'persona', label: 'Colaboradora', tipo: 'select', opciones: [['', 'Elegí…']].concat(personas.map(p => [p, p])) },
+        { k: 'mes', label: 'Mes', tipo: 'mes' },
+        { k: 'monto', label: 'Monto en pesos', tipo: 'numero' },
+      ];
+    }
+
+    function lpMontosFijos(body, D) {
+      const mes = state.liqp.mesFijos || state.liq.mes;
+      body.appendChild(nodo('p', 'text-xs text-slate-500 pb-2', 'Lo que cobra por mes quien tiene un monto fijo (se suma a lo que haya cargado).'));
+      const lab = nodo('label', 'block pb-2');
+      lab.appendChild(nodo('span', 'text-xs font-medium text-slate-500 uppercase tracking-wide', 'Mes'));
+      const inpMes = nodo('input', LP_INPUT);
+      inpMes.type = 'month';
+      inpMes.value = mes;
+      inpMes.addEventListener('change', () => {
+        if (!/^\d{4}-\d{2}$/.test(inpMes.value)) return;
+        state.liqp.mesFijos = inpMes.value;
+        lpEditar('');
+      });
+      lab.appendChild(inpMes);
+      body.appendChild(lab);
+
+      const cerrado = (D.mesesCerrados || []).includes(mes);
+      if (cerrado) body.appendChild(nodo('p', 'pb-2 text-sm font-semibold text-slate-600', mesTitulo(mes) + ' está cerrado: estos montos quedaron guardados con el cierre.'));
+      const delMes = D.tablas.montosFijos.filter(m => m.mes === mes).sort((a, b) => porNombre(a.persona, b.persona));
+      if (!delMes.length) body.appendChild(nodo('p', 'py-2 text-sm text-slate-500', 'No hay montos fijos cargados en ' + nombreMes(mes) + '.'));
+      for (const m of delMes) {
+        lpFila(body, 'montosFijos:' + m.fila, izq => {
+          izq.appendChild(nodo('div', 'font-medium text-slate-900 break-words', m.persona));
+          izq.appendChild(nodo('div', 'text-xs text-slate-500', pesos(m.monto)));
+        }, () => lpEditor(m.persona + ' · ' + mesTitulo(m.mes), camposFijo(D), m, lpGuardar('montosFijos', m),
+          lpBorrar('montosFijos', m, '¿Borrar el monto fijo de ' + m.persona + ' en ' + nombreMes(m.mes) + '?')), cerrado);
+      }
+      if (delMes.length) {
+        body.appendChild(nodo('p', 'pt-2 border-t border-slate-100 text-sm font-semibold text-slate-900 text-right',
+          'Total: ' + pesos(delMes.reduce((s, m) => s + Number(m.monto), 0))));
+      }
+
+      // Se repiten casi todos los meses: copiar los del mes anterior ahorra cargarlos uno por uno
+      const ant = mesAnterior(mes);
+      const yaTienen = new Set(delMes.map(m => m.persona.toLowerCase()));
+      const copiables = D.tablas.montosFijos.filter(m => m.mes === ant && !yaTienen.has(m.persona.toLowerCase()));
+      if (copiables.length && !cerrado) {
+        const b = nodo('button', 'mt-2 w-full rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-semibold py-3 text-sm disabled:opacity-60',
+          'Copiar los de ' + nombreMes(ant) + ' (' + copiables.length + ')');
+        b.type = 'button';
+        const err = nodo('p', 'text-sm font-semibold text-red-700 mt-1');
+        err.hidden = true;
+        b.onclick = async () => {
+          if (!confirm('¿Copiar a ' + nombreMes(mes) + ' los ' + copiables.length + ' montos fijos de ' + nombreMes(ant) + '? Después podés cambiar cada uno.')) return;
+          b.disabled = true;
+          try {
+            await cambioLiq({ action: 'liq_copiar_fijos', mes });
+          } catch (e) {
+            err.textContent = e.message;
+            err.hidden = false;
+            b.disabled = false;
+          }
+        };
+        body.append(b, err);
+      }
+      if (!cerrado) {
+        lpAgregar(body, 'montosFijos:nuevo', 'Agregar monto fijo',
+          () => lpEditor('Monto fijo nuevo', camposFijo(D), Object.assign({ mes }, state.liqp.prefijo), lpGuardar('montosFijos', null)));
+      }
+
+      const otros = [...new Set(D.tablas.montosFijos.map(m => m.mes))].filter(x => x !== mes).sort().reverse();
+      if (otros.length) {
+        const caja = nodo('div', 'pt-3');
+        caja.appendChild(nodo('p', 'text-xs font-medium text-slate-500 uppercase tracking-wide pb-1', 'Otros meses con montos fijos'));
+        const chips = nodo('div', 'flex flex-wrap gap-2');
+        for (const x of otros) {
+          const c = nodo('button', 'rounded-full bg-slate-100 text-slate-700 text-sm px-3 py-2', mesTitulo(x));
+          c.type = 'button';
+          c.onclick = () => { state.liqp.mesFijos = x; lpEditar(''); };
+          chips.appendChild(c);
+        }
+        caja.appendChild(chips);
+        body.appendChild(caja);
+      }
+    }
+
+    const camposDias = () => [{ k: 'mes', label: 'Mes', tipo: 'mes' }, { k: 'dias', label: 'Días laborales', tipo: 'numero' }];
+
+    function lpDiasLaborales(body, D) {
+      body.appendChild(nodo('p', 'text-xs text-slate-500 pb-1', 'Se usan para calcular inasistencias y horas faltantes. No cambian lo que se paga.'));
+      lpAgregar(body, 'diasLaborales:nuevo', 'Agregar mes',
+        () => lpEditor('Mes nuevo', camposDias(), Object.assign({ mes: state.liq.mes }, state.liqp.prefijo), lpGuardar('diasLaborales', null)));
+      const cerrados = D.mesesCerrados || [];
+      for (const d of D.tablas.diasLaborales.slice().sort((a, b) => b.mes.localeCompare(a.mes))) {
+        lpFila(body, 'diasLaborales:' + d.fila, izq => {
+          izq.appendChild(nodo('span', 'font-medium text-slate-900', mesTitulo(d.mes) + ': '));
+          izq.appendChild(document.createTextNode(d.dias + ' días'));
+        }, () => lpEditor(mesTitulo(d.mes), camposDias(), d, lpGuardar('diasLaborales', d),
+          lpBorrar('diasLaborales', d, '¿Borrar los días laborales de ' + nombreMes(d.mes) + '?')), cerrados.includes(d.mes));
+      }
+    }
+
+    const camposColab = () => [
+      { k: 'nombre_completo', label: 'Apellido, Nombre (igual que en el formulario)' },
+      { k: 'dni', label: 'DNI', tipo: 'numero' },
+    ];
+
+    function lpColaboradoras(body, D) {
+      body.appendChild(nodo('p', 'text-xs text-slate-500 pb-1', 'Las que aparecen en la liquidación y en el resumen para Melina, con su DNI.'));
+      lpFaltantes(body, 'Tienen usuario en la app y no están en la liquidación', D.personasSinListar, 'colaboradoras:nuevo', 'nombre_completo');
+      lpAgregar(body, 'colaboradoras:nuevo', 'Agregar colaboradora',
+        () => lpEditor('Colaboradora nueva', camposColab(), state.liqp.prefijo, lpGuardar('colaboradoras', null)));
+
+      const buscar = nodo('input', LP_INPUT.replace('mt-1 ', 'my-2 '));
+      buscar.type = 'search';
+      buscar.placeholder = 'Buscar colaboradora';
+      buscar.value = state.liqp.buscarCol;
+      body.appendChild(buscar);
+      const lista = nodo('div');
+      body.appendChild(lista);
+      const pintar = () => {
+        lista.innerHTML = '';
+        const q = state.liqp.buscarCol.toLowerCase();
+        const cols = D.tablas.colaboradoras.filter(c => !q || c.nombre_completo.toLowerCase().includes(q))
+          .sort((a, b) => porNombre(a.nombre_completo, b.nombre_completo));
+        if (!cols.length) lista.appendChild(nodo('p', 'py-4 text-sm text-slate-500 text-center', 'No hay colaboradoras que coincidan.'));
+        for (const c of cols) {
+          lpFila(lista, 'colaboradoras:' + c.fila, izq => {
+            izq.appendChild(nodo('div', 'font-medium text-slate-900 break-words', c.nombre_completo));
+            izq.appendChild(c.dni
+              ? nodo('div', 'text-xs text-slate-500', 'DNI ' + Number(c.dni).toLocaleString('es-AR'))
+              : nodo('div', 'text-xs font-semibold text-amber-700', 'Sin DNI'));
+          }, () => lpEditor(c.nombre_completo, camposColab(), c, lpGuardar('colaboradoras', c),
+            lpBorrar('colaboradoras', c, '¿Sacar a ' + c.nombre_completo + ' de la liquidación? Deja de aparecer en todos los meses, también los anteriores (hasta que exista «Cerrar mes»). Sus cargas no se borran.')));
+        }
+      };
+      buscar.addEventListener('input', () => { state.liqp.buscarCol = buscar.value.trim(); pintar(); });
+      pintar();
+    }
+
+    function lpHistorial(body, D) {
+      if (!D.historial.length) {
+        body.appendChild(nodo('p', 'text-sm text-slate-500', 'Todavía no hay cambios.'));
+        return;
+      }
+      const ul = nodo('ul', 'divide-y divide-slate-100 text-sm');
+      for (const h of D.historial) {
+        const li = nodo('li', 'py-2');
+        const cuando = /^\d{4}-\d{2}-\d{2}/.test(h.fecha) ? formatFechaCorta(h.fecha.slice(0, 10)) + ' ' + h.fecha.slice(11) : h.fecha;
+        li.appendChild(nodo('div', 'text-xs text-slate-500', cuando + ' · ' + h.persona));
+        li.appendChild(nodo('div', 'text-slate-800 break-words', h.detalle));
+        ul.appendChild(li);
+      }
+      body.appendChild(ul);
     }
 
     // =====================================================================
